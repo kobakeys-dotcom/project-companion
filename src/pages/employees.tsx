@@ -63,6 +63,7 @@ const employeeFormSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Valid email is required"),
+  employeeCode: z.string().min(1, "Employee ID is required (used for portal login)").max(50),
   phone: z.string().optional(),
   password: z.string().refine(val => val === "" || val.length >= 6, {
     message: "Password must be at least 6 characters"
@@ -620,6 +621,7 @@ function AddEmployeeDialog({ departments, projects, accommodations }: { departme
       firstName: "",
       lastName: "",
       email: "",
+      employeeCode: "",
       phone: "",
       password: "",
       jobTitle: "",
