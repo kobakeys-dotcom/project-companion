@@ -449,7 +449,7 @@ export default function EmployeeProfilePage() {
               <CardContent className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Employee ID</span>
-                  <span className="font-medium font-mono">{employee.id}</span>
+                  <span className="font-medium font-mono">{(employee as any).employeeCode || <span className="italic text-muted-foreground">Not set</span>}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-sm">
@@ -611,7 +611,7 @@ export default function EmployeeProfilePage() {
               </p>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Employee ID (for login)</span>
-                <span className="font-medium font-mono text-primary">{employee.id}</span>
+                <span className="font-medium font-mono text-primary">{(employee as any).employeeCode || <span className="italic text-muted-foreground">Not set — edit employee to assign one</span>}</span>
               </div>
               <Separator />
               <div className="flex justify-between text-sm">
