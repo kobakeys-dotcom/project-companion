@@ -167,6 +167,66 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          category: string
+          companyId: string
+          createdAt: string
+          employeeId: string | null
+          fileSize: number | null
+          fileUrl: string | null
+          id: string
+          isCompanyWide: boolean
+          name: string
+          type: string
+          updatedAt: string
+          uploadedBy: string | null
+        }
+        Insert: {
+          category: string
+          companyId: string
+          createdAt?: string
+          employeeId?: string | null
+          fileSize?: number | null
+          fileUrl?: string | null
+          id?: string
+          isCompanyWide?: boolean
+          name: string
+          type: string
+          updatedAt?: string
+          uploadedBy?: string | null
+        }
+        Update: {
+          category?: string
+          companyId?: string
+          createdAt?: string
+          employeeId?: string | null
+          fileSize?: number | null
+          fileUrl?: string | null
+          id?: string
+          isCompanyWide?: boolean
+          name?: string
+          type?: string
+          updatedAt?: string
+          uploadedBy?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_employeeId_fkey"
+            columns: ["employeeId"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           accommodationAllowance: number | null
@@ -368,6 +428,56 @@ export type Database = {
           },
         ]
       }
+      leave_types: {
+        Row: {
+          color: string | null
+          companyId: string
+          createdAt: string
+          daysAllowed: number
+          description: string | null
+          id: string
+          isActive: boolean
+          name: string
+          requiresDeptApproval: boolean
+          requiresMgmtApproval: boolean
+          updatedAt: string
+        }
+        Insert: {
+          color?: string | null
+          companyId: string
+          createdAt?: string
+          daysAllowed?: number
+          description?: string | null
+          id?: string
+          isActive?: boolean
+          name: string
+          requiresDeptApproval?: boolean
+          requiresMgmtApproval?: boolean
+          updatedAt?: string
+        }
+        Update: {
+          color?: string | null
+          companyId?: string
+          createdAt?: string
+          daysAllowed?: number
+          description?: string | null
+          id?: string
+          isActive?: boolean
+          name?: string
+          requiresDeptApproval?: boolean
+          requiresMgmtApproval?: boolean
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_types_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           company_id: string | null
@@ -452,6 +562,160 @@ export type Database = {
             columns: ["companyId"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_entries: {
+        Row: {
+          breakMinutes: number
+          clockIn: string
+          clockInLatitude: number | null
+          clockInLocation: string | null
+          clockInLongitude: number | null
+          clockOut: string | null
+          clockOutLatitude: number | null
+          clockOutLocation: string | null
+          clockOutLongitude: number | null
+          companyId: string
+          createdAt: string
+          date: string
+          employeeId: string
+          id: string
+          notes: string | null
+          updatedAt: string
+        }
+        Insert: {
+          breakMinutes?: number
+          clockIn?: string
+          clockInLatitude?: number | null
+          clockInLocation?: string | null
+          clockInLongitude?: number | null
+          clockOut?: string | null
+          clockOutLatitude?: number | null
+          clockOutLocation?: string | null
+          clockOutLongitude?: number | null
+          companyId: string
+          createdAt?: string
+          date?: string
+          employeeId: string
+          id?: string
+          notes?: string | null
+          updatedAt?: string
+        }
+        Update: {
+          breakMinutes?: number
+          clockIn?: string
+          clockInLatitude?: number | null
+          clockInLocation?: string | null
+          clockInLongitude?: number | null
+          clockOut?: string | null
+          clockOutLatitude?: number | null
+          clockOutLocation?: string | null
+          clockOutLongitude?: number | null
+          companyId?: string
+          createdAt?: string
+          date?: string
+          employeeId?: string
+          id?: string
+          notes?: string | null
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_employeeId_fkey"
+            columns: ["employeeId"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_off_requests: {
+        Row: {
+          actualReturnDate: string | null
+          adminApprovalStatus: string
+          companyId: string
+          createdAt: string
+          deptApprovalStatus: string
+          deptApprovalToken: string | null
+          employeeId: string
+          endDate: string
+          id: string
+          leaveTypeId: string | null
+          mgmtApprovalStatus: string
+          mgmtApprovalToken: string | null
+          reason: string | null
+          startDate: string
+          status: string
+          type: string | null
+          updatedAt: string
+        }
+        Insert: {
+          actualReturnDate?: string | null
+          adminApprovalStatus?: string
+          companyId: string
+          createdAt?: string
+          deptApprovalStatus?: string
+          deptApprovalToken?: string | null
+          employeeId: string
+          endDate: string
+          id?: string
+          leaveTypeId?: string | null
+          mgmtApprovalStatus?: string
+          mgmtApprovalToken?: string | null
+          reason?: string | null
+          startDate: string
+          status?: string
+          type?: string | null
+          updatedAt?: string
+        }
+        Update: {
+          actualReturnDate?: string | null
+          adminApprovalStatus?: string
+          companyId?: string
+          createdAt?: string
+          deptApprovalStatus?: string
+          deptApprovalToken?: string | null
+          employeeId?: string
+          endDate?: string
+          id?: string
+          leaveTypeId?: string | null
+          mgmtApprovalStatus?: string
+          mgmtApprovalToken?: string | null
+          reason?: string | null
+          startDate?: string
+          status?: string
+          type?: string | null
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_off_requests_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_off_requests_employeeId_fkey"
+            columns: ["employeeId"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_off_requests_leaveTypeId_fkey"
+            columns: ["leaveTypeId"]
+            isOneToOne: false
+            referencedRelation: "leave_types"
             referencedColumns: ["id"]
           },
         ]
