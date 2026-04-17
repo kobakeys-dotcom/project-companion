@@ -266,6 +266,57 @@ export type Database = {
         }
         Relationships: []
       }
+      compensation_history: {
+        Row: {
+          approvedBy: string | null
+          companyId: string
+          createdAt: string
+          effectiveDate: string
+          employeeId: string
+          id: string
+          reason: string | null
+          salary: number
+          updatedAt: string
+        }
+        Insert: {
+          approvedBy?: string | null
+          companyId: string
+          createdAt?: string
+          effectiveDate: string
+          employeeId: string
+          id?: string
+          reason?: string | null
+          salary?: number
+          updatedAt?: string
+        }
+        Update: {
+          approvedBy?: string | null
+          companyId?: string
+          createdAt?: string
+          effectiveDate?: string
+          employeeId?: string
+          id?: string
+          reason?: string | null
+          salary?: number
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compensation_history_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compensation_history_employeeId_fkey"
+            columns: ["employeeId"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           color: string | null
@@ -869,16 +920,20 @@ export type Database = {
       }
       payroll_records: {
         Row: {
+          accommodationAllowance: number
           baseSalary: number
           companyId: string
           createdAt: string
           deductionNotes: string | null
           deductions: number
+          earnedSalary: number
           employeeId: string
+          foodAllowance: number
           grossSalary: number
           id: string
           month: string
           netPay: number
+          otherAllowance: number
           overtimeAmount: number
           overtimeHours: number
           overtimeRate: number
@@ -889,16 +944,20 @@ export type Database = {
           updatedAt: string
         }
         Insert: {
+          accommodationAllowance?: number
           baseSalary?: number
           companyId: string
           createdAt?: string
           deductionNotes?: string | null
           deductions?: number
+          earnedSalary?: number
           employeeId: string
+          foodAllowance?: number
           grossSalary?: number
           id?: string
           month: string
           netPay?: number
+          otherAllowance?: number
           overtimeAmount?: number
           overtimeHours?: number
           overtimeRate?: number
@@ -909,16 +968,20 @@ export type Database = {
           updatedAt?: string
         }
         Update: {
+          accommodationAllowance?: number
           baseSalary?: number
           companyId?: string
           createdAt?: string
           deductionNotes?: string | null
           deductions?: number
+          earnedSalary?: number
           employeeId?: string
+          foodAllowance?: number
           grossSalary?: number
           id?: string
           month?: string
           netPay?: number
+          otherAllowance?: number
           overtimeAmount?: number
           overtimeHours?: number
           overtimeRate?: number
