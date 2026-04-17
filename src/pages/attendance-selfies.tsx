@@ -66,10 +66,9 @@ export default function AttendanceSelfiesPage() {
         .from("time_entries")
         .select("*, employees(firstName,lastName,profileImageUrl)")
         .eq("date", date)
-        .or("clockInSelfieUrl.not.is.null,clockOutSelfieUrl.not.is.null")
         .order("clockIn", { ascending: false });
       if (error) throw error;
-      return data || [];
+      return (data || []).filter((e: any) => e.clockInSelfieUrl || e.clockOutSelfieUrl);
     },
   });
 
