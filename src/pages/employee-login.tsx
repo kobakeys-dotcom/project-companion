@@ -11,14 +11,31 @@ import { supabase } from "@/integrations/supabase/client";
 export default function EmployeeLogin() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({ employeeCode: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Look up the email tied to this employee code
+    const { data: email, error: lookupErr } = await supabase.rpc(
+      "email_for_employee_code" as any,
+      { _code: formData.employeeCode.trim() },
+    );
+
+    if (lookupErr || !email) {
+      setIsLoading(false);
+      toast({
+        title: "Login failed",
+        description: "Invalid Employee ID or password",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: formData.email,
+      email: email as string,
       password: formData.password,
     });
     setIsLoading(false);
@@ -26,7 +43,7 @@ export default function EmployeeLogin() {
     if (error || !data.user) {
       toast({
         title: "Login failed",
-        description: error?.message || "Invalid email or password",
+        description: "Invalid Employee ID or password",
         variant: "destructive",
       });
       return;
@@ -46,19 +63,20 @@ export default function EmployeeLogin() {
             </div>
           </div>
           <CardTitle className="text-2xl">Employee Login</CardTitle>
-          <CardDescription>Access your employee portal</CardDescription>
+          <CardDescription>Sign in with your Employee ID</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="employeeCode">Employee ID</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="you@company.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                id="employeeCode"
+                type="text"
+                placeholder="e.g. EMP-001"
+                value={formData.employeeCode}
+                onChange={(e) => setFormData({ ...formData, employeeCode: e.target.value })}
                 required
+                autoCapitalize="characters"
               />
             </div>
 

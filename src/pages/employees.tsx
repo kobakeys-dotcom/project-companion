@@ -63,6 +63,7 @@ const employeeFormSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Valid email is required"),
+  employeeCode: z.string().min(1, "Employee ID is required (used for portal login)").max(50),
   phone: z.string().optional(),
   password: z.string().refine(val => val === "" || val.length >= 6, {
     message: "Password must be at least 6 characters"
@@ -138,6 +139,7 @@ function EditEmployeeDialog({
       firstName: employee.firstName,
       lastName: employee.lastName,
       email: employee.email,
+      employeeCode: (employee as any).employeeCode || "",
       phone: employee.phone || "",
       jobTitle: employee.jobTitle,
       departmentId: employee.departmentId || "",
@@ -227,6 +229,9 @@ function EditEmployeeDialog({
           </div>
           <FormField control={form.control} name="email" render={({ field }) => (
             <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} data-testid="input-edit-email" /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="employeeCode" render={({ field }) => (
+            <FormItem><FormLabel>Employee ID (for portal login)</FormLabel><FormControl><Input placeholder="e.g. EMP-001" {...field} data-testid="input-edit-employee-code" /></FormControl><FormMessage /></FormItem>
           )} />
           <div className="grid grid-cols-2 gap-4">
             <FormField control={form.control} name="phone" render={({ field }) => (
@@ -620,6 +625,7 @@ function AddEmployeeDialog({ departments, projects, accommodations }: { departme
       firstName: "",
       lastName: "",
       email: "",
+      employeeCode: "",
       phone: "",
       password: "",
       jobTitle: "",
@@ -728,6 +734,19 @@ function AddEmployeeDialog({ departments, projects, accommodations }: { departme
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input type="email" {...field} data-testid="input-email" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="employeeCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Employee ID (for portal login)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. EMP-001" {...field} data-testid="input-employee-code" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
