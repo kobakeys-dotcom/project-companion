@@ -96,6 +96,143 @@ export type Database = {
           },
         ]
       }
+      benefit_enrollments: {
+        Row: {
+          benefitId: string
+          companyId: string
+          createdAt: string
+          employeeId: string
+          endedAt: string | null
+          enrolledAt: string
+          id: string
+          notes: string | null
+          status: string
+          updatedAt: string
+        }
+        Insert: {
+          benefitId: string
+          companyId: string
+          createdAt?: string
+          employeeId: string
+          endedAt?: string | null
+          enrolledAt?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          updatedAt?: string
+        }
+        Update: {
+          benefitId?: string
+          companyId?: string
+          createdAt?: string
+          employeeId?: string
+          endedAt?: string | null
+          enrolledAt?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          updatedAt?: string
+        }
+        Relationships: []
+      }
+      benefit_types: {
+        Row: {
+          color: string
+          companyId: string
+          createdAt: string
+          description: string | null
+          id: string
+          isActive: boolean
+          name: string
+          updatedAt: string
+        }
+        Insert: {
+          color?: string
+          companyId: string
+          createdAt?: string
+          description?: string | null
+          id?: string
+          isActive?: boolean
+          name: string
+          updatedAt?: string
+        }
+        Update: {
+          color?: string
+          companyId?: string
+          createdAt?: string
+          description?: string | null
+          id?: string
+          isActive?: boolean
+          name?: string
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "benefit_types_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      benefits: {
+        Row: {
+          benefitTypeId: string | null
+          companyId: string
+          coverageDetails: string | null
+          createdAt: string
+          description: string | null
+          employeeContribution: number
+          employerContribution: number
+          id: string
+          name: string
+          provider: string | null
+          updatedAt: string
+        }
+        Insert: {
+          benefitTypeId?: string | null
+          companyId: string
+          coverageDetails?: string | null
+          createdAt?: string
+          description?: string | null
+          employeeContribution?: number
+          employerContribution?: number
+          id?: string
+          name: string
+          provider?: string | null
+          updatedAt?: string
+        }
+        Update: {
+          benefitTypeId?: string | null
+          companyId?: string
+          coverageDetails?: string | null
+          createdAt?: string
+          description?: string | null
+          employeeContribution?: number
+          employerContribution?: number
+          id?: string
+          name?: string
+          provider?: string | null
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "benefits_benefitTypeId_fkey"
+            columns: ["benefitTypeId"]
+            isOneToOne: false
+            referencedRelation: "benefit_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "benefits_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           company_id: string
@@ -428,6 +565,222 @@ export type Database = {
           },
         ]
       }
+      expense_types: {
+        Row: {
+          color: string
+          companyId: string
+          createdAt: string
+          description: string | null
+          id: string
+          isActive: boolean
+          name: string
+          updatedAt: string
+        }
+        Insert: {
+          color?: string
+          companyId: string
+          createdAt?: string
+          description?: string | null
+          id?: string
+          isActive?: boolean
+          name: string
+          updatedAt?: string
+        }
+        Update: {
+          color?: string
+          companyId?: string
+          createdAt?: string
+          description?: string | null
+          id?: string
+          isActive?: boolean
+          name?: string
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_types_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          companyId: string
+          createdAt: string
+          description: string
+          employeeId: string
+          expenseDate: string
+          expenseTypeId: string | null
+          id: string
+          notes: string | null
+          receiptUrl: string | null
+          status: string
+          updatedAt: string
+        }
+        Insert: {
+          amount?: number
+          companyId: string
+          createdAt?: string
+          description: string
+          employeeId: string
+          expenseDate: string
+          expenseTypeId?: string | null
+          id?: string
+          notes?: string | null
+          receiptUrl?: string | null
+          status?: string
+          updatedAt?: string
+        }
+        Update: {
+          amount?: number
+          companyId?: string
+          createdAt?: string
+          description?: string
+          employeeId?: string
+          expenseDate?: string
+          expenseTypeId?: string | null
+          id?: string
+          notes?: string | null
+          receiptUrl?: string | null
+          status?: string
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_employeeId_fkey"
+            columns: ["employeeId"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_expenseTypeId_fkey"
+            columns: ["expenseTypeId"]
+            isOneToOne: false
+            referencedRelation: "expense_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_candidates: {
+        Row: {
+          appliedDate: string | null
+          companyId: string
+          coverLetter: string | null
+          createdAt: string
+          email: string
+          firstName: string
+          id: string
+          jobId: string | null
+          lastName: string
+          notes: string | null
+          phone: string | null
+          rating: number | null
+          resumeUrl: string | null
+          stage: string
+          updatedAt: string
+        }
+        Insert: {
+          appliedDate?: string | null
+          companyId: string
+          coverLetter?: string | null
+          createdAt?: string
+          email: string
+          firstName: string
+          id?: string
+          jobId?: string | null
+          lastName: string
+          notes?: string | null
+          phone?: string | null
+          rating?: number | null
+          resumeUrl?: string | null
+          stage?: string
+          updatedAt?: string
+        }
+        Update: {
+          appliedDate?: string | null
+          companyId?: string
+          coverLetter?: string | null
+          createdAt?: string
+          email?: string
+          firstName?: string
+          id?: string
+          jobId?: string | null
+          lastName?: string
+          notes?: string | null
+          phone?: string | null
+          rating?: number | null
+          resumeUrl?: string | null
+          stage?: string
+          updatedAt?: string
+        }
+        Relationships: []
+      }
+      jobs: {
+        Row: {
+          closingDate: string | null
+          companyId: string
+          createdAt: string
+          departmentId: string | null
+          description: string | null
+          employmentType: Database["public"]["Enums"]["employment_type"]
+          id: string
+          location: string | null
+          postedDate: string | null
+          requirements: string | null
+          salaryMax: number | null
+          salaryMin: number | null
+          status: string
+          title: string
+          updatedAt: string
+        }
+        Insert: {
+          closingDate?: string | null
+          companyId: string
+          createdAt?: string
+          departmentId?: string | null
+          description?: string | null
+          employmentType?: Database["public"]["Enums"]["employment_type"]
+          id?: string
+          location?: string | null
+          postedDate?: string | null
+          requirements?: string | null
+          salaryMax?: number | null
+          salaryMin?: number | null
+          status?: string
+          title: string
+          updatedAt?: string
+        }
+        Update: {
+          closingDate?: string | null
+          companyId?: string
+          createdAt?: string
+          departmentId?: string | null
+          description?: string | null
+          employmentType?: Database["public"]["Enums"]["employment_type"]
+          id?: string
+          location?: string | null
+          postedDate?: string | null
+          requirements?: string | null
+          salaryMax?: number | null
+          salaryMin?: number | null
+          status?: string
+          title?: string
+          updatedAt?: string
+        }
+        Relationships: []
+      }
       leave_types: {
         Row: {
           color: string | null
@@ -477,6 +830,186 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          companyId: string | null
+          createdAt: string
+          id: string
+          link: string | null
+          readAt: string | null
+          title: string
+          type: string
+          userId: string
+        }
+        Insert: {
+          body?: string | null
+          companyId?: string | null
+          createdAt?: string
+          id?: string
+          link?: string | null
+          readAt?: string | null
+          title: string
+          type: string
+          userId: string
+        }
+        Update: {
+          body?: string | null
+          companyId?: string | null
+          createdAt?: string
+          id?: string
+          link?: string | null
+          readAt?: string | null
+          title?: string
+          type?: string
+          userId?: string
+        }
+        Relationships: []
+      }
+      payroll_records: {
+        Row: {
+          baseSalary: number
+          companyId: string
+          createdAt: string
+          deductionNotes: string | null
+          deductions: number
+          employeeId: string
+          grossSalary: number
+          id: string
+          month: string
+          netPay: number
+          overtimeAmount: number
+          overtimeHours: number
+          overtimeRate: number
+          payFrequency: string
+          payPeriodEnd: string
+          payPeriodStart: string
+          status: string
+          updatedAt: string
+        }
+        Insert: {
+          baseSalary?: number
+          companyId: string
+          createdAt?: string
+          deductionNotes?: string | null
+          deductions?: number
+          employeeId: string
+          grossSalary?: number
+          id?: string
+          month: string
+          netPay?: number
+          overtimeAmount?: number
+          overtimeHours?: number
+          overtimeRate?: number
+          payFrequency?: string
+          payPeriodEnd: string
+          payPeriodStart: string
+          status?: string
+          updatedAt?: string
+        }
+        Update: {
+          baseSalary?: number
+          companyId?: string
+          createdAt?: string
+          deductionNotes?: string | null
+          deductions?: number
+          employeeId?: string
+          grossSalary?: number
+          id?: string
+          month?: string
+          netPay?: number
+          overtimeAmount?: number
+          overtimeHours?: number
+          overtimeRate?: number
+          payFrequency?: string
+          payPeriodEnd?: string
+          payPeriodStart?: string
+          status?: string
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_records_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_records_employeeId_fkey"
+            columns: ["employeeId"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      performance_reviews: {
+        Row: {
+          comments: string | null
+          communicationRating: number | null
+          companyId: string
+          createdAt: string
+          employeeId: string
+          goals: string | null
+          id: string
+          improvements: string | null
+          overallRating: number | null
+          productivityRating: number | null
+          qualityRating: number | null
+          reviewDate: string | null
+          reviewerId: string | null
+          reviewPeriodEnd: string
+          reviewPeriodStart: string
+          status: string
+          strengths: string | null
+          teamworkRating: number | null
+          updatedAt: string
+        }
+        Insert: {
+          comments?: string | null
+          communicationRating?: number | null
+          companyId: string
+          createdAt?: string
+          employeeId: string
+          goals?: string | null
+          id?: string
+          improvements?: string | null
+          overallRating?: number | null
+          productivityRating?: number | null
+          qualityRating?: number | null
+          reviewDate?: string | null
+          reviewerId?: string | null
+          reviewPeriodEnd: string
+          reviewPeriodStart: string
+          status?: string
+          strengths?: string | null
+          teamworkRating?: number | null
+          updatedAt?: string
+        }
+        Update: {
+          comments?: string | null
+          communicationRating?: number | null
+          companyId?: string
+          createdAt?: string
+          employeeId?: string
+          goals?: string | null
+          id?: string
+          improvements?: string | null
+          overallRating?: number | null
+          productivityRating?: number | null
+          qualityRating?: number | null
+          reviewDate?: string | null
+          reviewerId?: string | null
+          reviewPeriodEnd?: string
+          reviewPeriodStart?: string
+          status?: string
+          strengths?: string | null
+          teamworkRating?: number | null
+          updatedAt?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
