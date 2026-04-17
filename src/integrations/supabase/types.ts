@@ -1172,16 +1172,19 @@ export type Database = {
           clockInLatitude: number | null
           clockInLocation: string | null
           clockInLongitude: number | null
+          clockInSelfieUrl: string | null
           clockOut: string | null
           clockOutLatitude: number | null
           clockOutLocation: string | null
           clockOutLongitude: number | null
+          clockOutSelfieUrl: string | null
           companyId: string
           createdAt: string
           date: string
           employeeId: string
           id: string
           notes: string | null
+          source: string | null
           updatedAt: string
         }
         Insert: {
@@ -1190,16 +1193,19 @@ export type Database = {
           clockInLatitude?: number | null
           clockInLocation?: string | null
           clockInLongitude?: number | null
+          clockInSelfieUrl?: string | null
           clockOut?: string | null
           clockOutLatitude?: number | null
           clockOutLocation?: string | null
           clockOutLongitude?: number | null
+          clockOutSelfieUrl?: string | null
           companyId: string
           createdAt?: string
           date?: string
           employeeId: string
           id?: string
           notes?: string | null
+          source?: string | null
           updatedAt?: string
         }
         Update: {
@@ -1208,16 +1214,19 @@ export type Database = {
           clockInLatitude?: number | null
           clockInLocation?: string | null
           clockInLongitude?: number | null
+          clockInSelfieUrl?: string | null
           clockOut?: string | null
           clockOutLatitude?: number | null
           clockOutLocation?: string | null
           clockOutLongitude?: number | null
+          clockOutSelfieUrl?: string | null
           companyId?: string
           createdAt?: string
           date?: string
           employeeId?: string
           id?: string
           notes?: string | null
+          source?: string | null
           updatedAt?: string
         }
         Relationships: [
