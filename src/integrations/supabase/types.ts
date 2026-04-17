@@ -434,6 +434,7 @@ export type Database = {
           emergencyContactName: string | null
           emergencyContactPhone: string | null
           emergencyContactRelation: string | null
+          employeeCode: string | null
           employmentStatus: Database["public"]["Enums"]["employment_status"]
           employmentType: Database["public"]["Enums"]["employment_type"]
           firstName: string
@@ -488,6 +489,7 @@ export type Database = {
           emergencyContactName?: string | null
           emergencyContactPhone?: string | null
           emergencyContactRelation?: string | null
+          employeeCode?: string | null
           employmentStatus?: Database["public"]["Enums"]["employment_status"]
           employmentType?: Database["public"]["Enums"]["employment_type"]
           firstName: string
@@ -542,6 +544,7 @@ export type Database = {
           emergencyContactName?: string | null
           emergencyContactPhone?: string | null
           emergencyContactRelation?: string | null
+          employeeCode?: string | null
           employmentStatus?: Database["public"]["Enums"]["employment_status"]
           employmentType?: Database["public"]["Enums"]["employment_type"]
           firstName?: string
@@ -1428,6 +1431,7 @@ export type Database = {
       }
     }
     Functions: {
+      email_for_employee_code: { Args: { _code: string }; Returns: string }
       get_user_company: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
