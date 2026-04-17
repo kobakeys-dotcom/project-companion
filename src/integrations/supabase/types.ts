@@ -1287,7 +1287,82 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      time_off_requests_safe: {
+        Row: {
+          actualReturnDate: string | null
+          adminApprovalStatus: string | null
+          companyId: string | null
+          createdAt: string | null
+          deptApprovalStatus: string | null
+          employeeId: string | null
+          endDate: string | null
+          id: string | null
+          leaveTypeId: string | null
+          mgmtApprovalStatus: string | null
+          reason: string | null
+          startDate: string | null
+          status: string | null
+          type: string | null
+          updatedAt: string | null
+        }
+        Insert: {
+          actualReturnDate?: string | null
+          adminApprovalStatus?: string | null
+          companyId?: string | null
+          createdAt?: string | null
+          deptApprovalStatus?: string | null
+          employeeId?: string | null
+          endDate?: string | null
+          id?: string | null
+          leaveTypeId?: string | null
+          mgmtApprovalStatus?: string | null
+          reason?: string | null
+          startDate?: string | null
+          status?: string | null
+          type?: string | null
+          updatedAt?: string | null
+        }
+        Update: {
+          actualReturnDate?: string | null
+          adminApprovalStatus?: string | null
+          companyId?: string | null
+          createdAt?: string | null
+          deptApprovalStatus?: string | null
+          employeeId?: string | null
+          endDate?: string | null
+          id?: string | null
+          leaveTypeId?: string | null
+          mgmtApprovalStatus?: string | null
+          reason?: string | null
+          startDate?: string | null
+          status?: string | null
+          type?: string | null
+          updatedAt?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_off_requests_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_off_requests_employeeId_fkey"
+            columns: ["employeeId"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_off_requests_leaveTypeId_fkey"
+            columns: ["leaveTypeId"]
+            isOneToOne: false
+            referencedRelation: "leave_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_user_company: { Args: { _user_id: string }; Returns: string }
@@ -1300,6 +1375,58 @@ export type Database = {
       }
       is_company_manager: { Args: { _company_id: string }; Returns: boolean }
       is_company_member: { Args: { _company_id: string }; Returns: boolean }
+      list_employees_directory: {
+        Args: never
+        Returns: {
+          accommodationId: string
+          bio: string
+          companyId: string
+          createdAt: string
+          departmentId: string
+          email: string
+          employmentStatus: Database["public"]["Enums"]["employment_status"]
+          employmentType: Database["public"]["Enums"]["employment_type"]
+          firstName: string
+          id: string
+          jobTitle: string
+          lastName: string
+          location: string
+          nationality: string
+          phone: string
+          profileImageUrl: string
+          projectId: string
+          roomId: string
+          startDate: string
+          updatedAt: string
+          userId: string
+        }[]
+      }
+      list_my_time_off_requests: {
+        Args: never
+        Returns: {
+          actualReturnDate: string | null
+          adminApprovalStatus: string | null
+          companyId: string | null
+          createdAt: string | null
+          deptApprovalStatus: string | null
+          employeeId: string | null
+          endDate: string | null
+          id: string | null
+          leaveTypeId: string | null
+          mgmtApprovalStatus: string | null
+          reason: string | null
+          startDate: string | null
+          status: string | null
+          type: string | null
+          updatedAt: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "time_off_requests_safe"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "manager" | "employee"
