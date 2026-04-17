@@ -223,7 +223,10 @@ Deno.serve(async (req) => {
       if (!reusedExistingUser) {
         await admin.auth.admin.deleteUser(newUserId);
       }
-      return json({ error: empErr.message }, 400);
+      const friendly = empErr.message?.includes("employees_company_code_unique")
+        ? "That Employee ID is already in use. Choose a different one."
+        : empErr.message;
+      return json({ error: friendly }, 400);
     }
 
     return json({ employee }, 200);
