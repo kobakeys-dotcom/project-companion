@@ -391,12 +391,24 @@ interface TimeEntryRow {
 }
 
 function getPosition(): Promise<GeolocationPosition | null> {
-  return new Promise((resolve) => {
-    if (!("geolocation" in navigator)) return resolve(null);
+  return new Promise((resolve, reject) => {
+    if (!("geolocation" in navigator)) {
+      return reject(new Error("Geolocation is not supported by this browser."));
+    }
     navigator.geolocation.getCurrentPosition(
       (p) => resolve(p),
-      () => resolve(null),
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 }
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          reject(new Error("Location permission denied. Allow location access in your browser settings to clock in."));
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          reject(new Error("Location unavailable. Check your device's location services."));
+        } else if (err.code === err.TIMEOUT) {
+          reject(new Error("Location request timed out. Try again."));
+        } else {
+          reject(new Error(err.message || "Could not get your location."));
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60_000 }
     );
   });
 }
@@ -445,7 +457,7 @@ function TimeClockCard({ employee }: { employee: Employee }) {
 
   const clockIn = useMutation({
     mutationFn: async (selfieUrl: string | null) => {
-      const pos = pendingPos ?? (await getPosition());
+      const pos = pendingPos;
       if (pos) {
         const { checkProjectGeofence } = await import("@/lib/geofence");
         const result = await checkProjectGeofence(
@@ -488,7 +500,8 @@ function TimeClockCard({ employee }: { employee: Employee }) {
   const clockOut = useMutation({
     mutationFn: async (selfieUrl: string | null) => {
       if (!open) throw new Error("No open shift");
-      const pos = await getPosition();
+      let pos: GeolocationPosition | null = null;
+      try { pos = await getPosition(); } catch { /* location optional on clock-out */ }
       const { error } = await sb
         .from("time_entries")
         .update({
@@ -512,9 +525,14 @@ function TimeClockCard({ employee }: { employee: Employee }) {
   });
 
   const startClockIn = async () => {
-    const pos = await getPosition();
-    setPendingPos(pos);
-    setSelfieOpen("in");
+    try {
+      // Request geolocation directly inside the click handler to preserve user-gesture
+      const pos = await getPosition();
+      setPendingPos(pos);
+      setSelfieOpen("in");
+    } catch (e: any) {
+      toast({ title: "Location required", description: e.message, variant: "destructive" });
+    }
   };
   const startClockOut = () => setSelfieOpen("out");
 
