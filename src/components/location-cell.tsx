@@ -1,12 +1,25 @@
 /**
  * Renders a location cell that:
- * - Shows the stored place name if it looks like a real address.
- * - Otherwise reverse-geocodes lat/lng on demand and caches the result.
- * - Click opens Google Maps at the exact coordinates.
+ * - Shows the stored place name (or reverse-geocodes lat/lng on demand).
+ * - Click opens an inline Leaflet map popover at the exact coordinates,
+ *   so it works even when google.com / openstreetmap.org are network-blocked.
  */
 import { useEffect, useState } from "react";
 import { MapPin, Loader2 } from "lucide-react";
 import { reverseGeocode, getCachedPlace } from "@/lib/reverse-geocode";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+const DefaultIcon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 interface Props {
   latitude: number | string | null | undefined;
@@ -51,29 +64,52 @@ export function LocationCell({ latitude, longitude, fallbackText, className, tes
 
   const label = name || fallbackText || (hasCoords ? `${lat!.toFixed(5)}, ${lng!.toFixed(5)}` : "-");
 
-  if (hasCoords) {
+  if (!hasCoords) {
     return (
-      <a
-        href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={`flex items-center gap-1 text-sm text-primary hover:underline ${className ?? ""}`}
-        data-testid={testId}
-        title={label}
-      >
-        <MapPin className="h-3 w-3 shrink-0" />
-        {loading && !name ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
-        ) : (
-          <span className="truncate">{label}</span>
-        )}
-      </a>
+      <span className={`flex items-center gap-1 text-sm ${className ?? ""}`}>
+        <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+        <span className="truncate">{label}</span>
+      </span>
     );
   }
+
   return (
-    <span className={`flex items-center gap-1 text-sm ${className ?? ""}`}>
-      <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-      <span className="truncate">{label}</span>
-    </span>
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={`flex items-center gap-1 text-sm text-primary hover:underline max-w-full ${className ?? ""}`}
+          data-testid={testId}
+          title={label}
+        >
+          <MapPin className="h-3 w-3 shrink-0" />
+          {loading && !name ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <span className="truncate">{label}</span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-0 overflow-hidden" align="start">
+        <div className="p-2 text-xs border-b bg-muted">
+          <div className="font-medium truncate">{label}</div>
+          <div className="text-muted-foreground">{lat!.toFixed(5)}, {lng!.toFixed(5)}</div>
+        </div>
+        <div style={{ height: 200, width: "100%" }}>
+          <MapContainer
+            center={[lat!, lng!]}
+            zoom={16}
+            style={{ height: "100%", width: "100%" }}
+            scrollWheelZoom={false}
+          >
+            <TileLayer
+              attribution='&copy; OpenStreetMap'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker position={[lat!, lng!]} />
+          </MapContainer>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
