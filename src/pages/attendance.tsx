@@ -46,6 +46,7 @@ import { format, parseISO, differenceInMinutes, startOfDay, endOfDay, startOfWee
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { LocationCell } from "@/components/location-cell";
 
 function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);
@@ -1039,26 +1040,13 @@ export default function AttendancePage() {
                                   <span className="text-muted-foreground text-sm">-</span>
                                 )}
                               </TableCell>
-                              <TableCell className="max-w-[200px]" title={entry.clockInLocation || undefined}>
-                                {entry.clockInLocation && entry.clockInLatitude && entry.clockInLongitude ? (
-                                  <a
-                                    href={`https://www.google.com/maps?q=${entry.clockInLatitude},${entry.clockInLongitude}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1 text-sm text-primary hover:underline"
-                                    data-testid={`link-clock-in-location-${entry.id}`}
-                                  >
-                                    <MapPin className="h-3 w-3 shrink-0" />
-                                    <span className="truncate">{entry.clockInLocation}</span>
-                                  </a>
-                                ) : entry.clockInLocation ? (
-                                  <span className="flex items-center gap-1 text-sm">
-                                    <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-                                    <span className="truncate">{entry.clockInLocation}</span>
-                                  </span>
-                                ) : (
-                                  <span className="text-muted-foreground">-</span>
-                                )}
+                              <TableCell className="max-w-[200px]">
+                                <LocationCell
+                                  latitude={entry.clockInLatitude}
+                                  longitude={entry.clockInLongitude}
+                                  fallbackText={entry.clockInLocation}
+                                  testId={`link-clock-in-location-${entry.id}`}
+                                />
                               </TableCell>
                               <TableCell className="whitespace-nowrap">
                                 {clockOut ? format(clockOut, "h:mm a") : "-"}
@@ -1076,26 +1064,13 @@ export default function AttendancePage() {
                                   <span className="text-muted-foreground text-sm">-</span>
                                 )}
                               </TableCell>
-                              <TableCell className="max-w-[200px]" title={entry.clockOutLocation || undefined}>
-                                {entry.clockOutLocation && entry.clockOutLatitude && entry.clockOutLongitude ? (
-                                  <a
-                                    href={`https://www.google.com/maps?q=${entry.clockOutLatitude},${entry.clockOutLongitude}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1 text-sm text-primary hover:underline"
-                                    data-testid={`link-clock-out-location-${entry.id}`}
-                                  >
-                                    <MapPin className="h-3 w-3 shrink-0" />
-                                    <span className="truncate">{entry.clockOutLocation}</span>
-                                  </a>
-                                ) : entry.clockOutLocation ? (
-                                  <span className="flex items-center gap-1 text-sm">
-                                    <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
-                                    <span className="truncate">{entry.clockOutLocation}</span>
-                                  </span>
-                                ) : (
-                                  <span className="text-muted-foreground">-</span>
-                                )}
+                              <TableCell className="max-w-[200px]">
+                                <LocationCell
+                                  latitude={entry.clockOutLatitude}
+                                  longitude={entry.clockOutLongitude}
+                                  fallbackText={entry.clockOutLocation}
+                                  testId={`link-clock-out-location-${entry.id}`}
+                                />
                               </TableCell>
                               <TableCell className="whitespace-nowrap">
                                 {entry.breakMinutes ? (

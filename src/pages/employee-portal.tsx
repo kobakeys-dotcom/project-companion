@@ -473,6 +473,13 @@ function TimeClockCard({ employee }: { employee: Employee }) {
           );
         }
       }
+      let placeName: string | null = null;
+      if (pos) {
+        try {
+          const { reverseGeocode } = await import("@/lib/reverse-geocode");
+          placeName = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        } catch { /* fallback to coords */ }
+      }
       const { error } = await sb.from("time_entries").insert({
         companyId: employee.companyId,
         employeeId: employee.id,
@@ -481,7 +488,7 @@ function TimeClockCard({ employee }: { employee: Employee }) {
         clockInLatitude: pos?.coords.latitude ?? null,
         clockInLongitude: pos?.coords.longitude ?? null,
         clockInLocation: pos
-          ? `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`
+          ? (placeName ?? `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`)
           : null,
         clockInSelfieUrl: selfieUrl || null,
         source: "web",
@@ -502,6 +509,13 @@ function TimeClockCard({ employee }: { employee: Employee }) {
       if (!open) throw new Error("No open shift");
       let pos: GeolocationPosition | null = null;
       try { pos = await getPosition(); } catch { /* location optional on clock-out */ }
+      let placeName: string | null = null;
+      if (pos) {
+        try {
+          const { reverseGeocode } = await import("@/lib/reverse-geocode");
+          placeName = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        } catch { /* fallback to coords */ }
+      }
       const { error } = await sb
         .from("time_entries")
         .update({
@@ -509,7 +523,7 @@ function TimeClockCard({ employee }: { employee: Employee }) {
           clockOutLatitude: pos?.coords.latitude ?? null,
           clockOutLongitude: pos?.coords.longitude ?? null,
           clockOutLocation: pos
-            ? `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`
+            ? (placeName ?? `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`)
             : null,
           clockOutSelfieUrl: selfieUrl || null,
         })
