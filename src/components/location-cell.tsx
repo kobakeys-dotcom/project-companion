@@ -54,7 +54,7 @@ export function LocationCell({ latitude, longitude, fallbackText, className, tes
   if (hasCoords) {
     return (
       <a
-        href={`https://www.google.com/maps?q=${lat},${lng}`}
+        href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`}
         target="_blank"
         rel="noopener noreferrer"
         className={`flex items-center gap-1 text-sm text-primary hover:underline ${className ?? ""}`}
