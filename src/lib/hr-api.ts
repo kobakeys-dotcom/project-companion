@@ -417,6 +417,34 @@ export async function hrMutate(
   const candMatch = path.match(/^\/api\/job-candidates\/([^/]+)$/);
   if (candMatch) return updateOrDelete("job_candidates", candMatch[1], method, body);
 
+  // ---- Company-wide settings ----
+  if (path === "/api/settings" && method === "PATCH") {
+    const companyId = await getCallerCompanyId();
+    // Ensure a row exists, then update it.
+    const { data: existing } = await sb
+      .from("company_settings")
+      .select("id")
+      .eq("companyId", companyId)
+      .maybeSingle();
+    if (!existing) {
+      const { data: created, error } = await sb
+        .from("company_settings")
+        .insert({ companyId, ...(body as object) })
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return created;
+    }
+    const { data, error } = await sb
+      .from("company_settings")
+      .update(body as object)
+      .eq("companyId", companyId)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
   throw new Error(`Unsupported ${method} ${path}`);
 }
 
