@@ -962,7 +962,7 @@ export default function EmployeePortal() {
 
         {/* Tabs */}
         <Tabs defaultValue="time-clock" className="space-y-4">
-          <TabsList className="grid grid-cols-7 w-full max-w-3xl">
+          <TabsList className="grid grid-cols-5 lg:grid-cols-10 w-full">
             <TabsTrigger value="time-clock">Clock</TabsTrigger>
             <TabsTrigger value="time-off">Time Off</TabsTrigger>
             <TabsTrigger value="expenses">Expenses</TabsTrigger>
@@ -970,6 +970,9 @@ export default function EmployeePortal() {
             <TabsTrigger value="benefits">Benefits</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
             <TabsTrigger value="documents">Docs</TabsTrigger>
+            <TabsTrigger value="service-charges">Tips</TabsTrigger>
+            <TabsTrigger value="disciplinary">Discipline</TabsTrigger>
+            <TabsTrigger value="deductions">Deductions</TabsTrigger>
           </TabsList>
 
           {/* ----- TIME CLOCK ----- */}
