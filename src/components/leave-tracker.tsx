@@ -111,35 +111,42 @@ export function LeaveTracker({ employees, leaveTypes, requests }: LeaveTrackerPr
   }, [leaveTypes]);
 
   // ---------- Balances ----------
+  // Dynamic per-leave-type usage built from the company's configured leave_types.
   type BalanceRow = {
     employee: Employee;
-    vacationUsed: number;
-    sickUsed: number;
+    // leaveTypeId -> days used (key "__other__" for unmatched)
+    used: Record<string, number>;
     otherUsed: number;
   };
 
   const balances: BalanceRow[] = useMemo(() => {
     const rows = new Map<string, BalanceRow>();
     employees.forEach((e) => {
-      rows.set(e.id, { employee: e, vacationUsed: 0, sickUsed: 0, otherUsed: 0 });
+      rows.set(e.id, { employee: e, used: {}, otherUsed: 0 });
     });
     approvedInYear.forEach((r) => {
       const row = rows.get(r.employeeId);
       if (!row) return;
       const days = daysBetween(r.startDate, r.actualReturnDate ?? r.endDate);
-      const ltName = (r.leaveTypeId ? ltById.get(r.leaveTypeId)?.name : r.type) ?? "";
-      const lower = ltName.toLowerCase();
-      if (lower.includes("sick")) row.sickUsed += days;
-      else if (lower.includes("vacation") || lower.includes("annual") || lower.includes("paid"))
-        row.vacationUsed += days;
-      else row.otherUsed += days;
+      if (r.leaveTypeId && ltById.has(r.leaveTypeId)) {
+        row.used[r.leaveTypeId] = (row.used[r.leaveTypeId] ?? 0) + days;
+      } else if (r.type) {
+        // Try to match legacy type string against a configured leave type by name
+        const match = leaveTypes.find(
+          (lt) => lt.name.toLowerCase() === r.type!.toLowerCase(),
+        );
+        if (match) row.used[match.id] = (row.used[match.id] ?? 0) + days;
+        else row.otherUsed += days;
+      } else {
+        row.otherUsed += days;
+      }
     });
     return Array.from(rows.values()).sort((a, b) =>
       `${a.employee.firstName} ${a.employee.lastName}`.localeCompare(
         `${b.employee.firstName} ${b.employee.lastName}`,
       ),
     );
-  }, [employees, approvedInYear, ltById]);
+  }, [employees, approvedInYear, ltById, leaveTypes]);
 
   // ---------- Calendar ----------
   const calendarCells = useMemo(() => {
