@@ -797,9 +797,50 @@ export default function EmployeePortal() {
     },
   });
 
-  const acknowledge = useMutation({
+  const { data: serviceCharges = [] } = useQuery<ServiceChargeShareRow[]>({
+    queryKey: ["portal:service-charges", empId], enabled: !!empId,
+    queryFn: async () => {
+      const { data, error } = await sb.from("service_charge_shares")
+        .select("*, pool:poolId(outletName, outletType, periodStart, periodEnd, currency)")
+        .eq("employeeId", empId)
+        .order("createdAt", { ascending: false });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as ServiceChargeShareRow[];
+    },
+  });
+
+  const { data: disciplinary = [] } = useQuery<DisciplinaryRow[]>({
+    queryKey: ["portal:disciplinary", empId], enabled: !!empId,
+    queryFn: async () => {
+      const { data, error } = await sb.from("disciplinary_records").select("*")
+        .eq("employeeId", empId).order("incidentDate", { ascending: false });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as DisciplinaryRow[];
+    },
+  });
+
+  const { data: deductions = [] } = useQuery<DeductionRow[]>({
+    queryKey: ["portal:deductions", empId], enabled: !!empId,
+    queryFn: async () => {
+      const { data, error } = await sb.from("deductions").select("*")
+        .eq("employeeId", empId).order("incidentDate", { ascending: false });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as DeductionRow[];
+    },
+  });
+
+  const acknowledgeDisciplinary = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await sb.from("performance_reviews")
+      const { error } = await sb.from("disciplinary_records")
+        .update({ status: "acknowledged", acknowledgedAt: new Date().toISOString() }).eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast({ title: "Acknowledged" });
+      qc.invalidateQueries({ queryKey: ["portal:disciplinary"] });
+    },
+    onError: (e: Error) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
+  });
         .update({ status: "acknowledged" }).eq("id", id);
       if (error) throw new Error(error.message);
     },
