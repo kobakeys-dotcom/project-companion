@@ -1,6 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest, parseErrorMessage } from "@/lib/queryClient";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -103,16 +104,85 @@ function formatCurrency(cents: number, currencyCode: string = "USD"): string {
   }
 }
 
+const MONTH_INDEX: Record<string, number> = MONTHS.reduce(
+  (acc, m, i) => ({ ...acc, [m]: i }),
+  {} as Record<string, number>,
+);
+
+/** Resolve the YYYY-MM key used by deductions.applyToPayrollMonth from a payroll record. */
+function payrollMonthKey(monthName?: string | null, periodStart?: string | null): string | null {
+  if (!monthName || !(monthName in MONTH_INDEX)) return null;
+  const mm = String(MONTH_INDEX[monthName] + 1).padStart(2, "0");
+  let year: number | null = null;
+  if (periodStart) {
+    const y = Number(periodStart.slice(0, 4));
+    if (Number.isFinite(y)) year = y;
+  }
+  if (!year) year = new Date().getFullYear();
+  return `${year}-${mm}`;
+}
+
+interface DeductionRow {
+  id: string;
+  employeeId: string;
+  amount: number; // numeric in DB (whole units)
+  currency: string;
+  description: string;
+  deductionType: string;
+  status: string;
+  applyToPayrollMonth: string | null;
+}
+
+/** Load approved/deducted deductions for the company and group them by employee + YYYY-MM. */
+function useApprovedDeductions() {
+  return useQuery({
+    queryKey: ["deductions", "approved-for-payroll"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("deductions")
+        .select("id, employeeId, amount, currency, description, deductionType, status, applyToPayrollMonth")
+        .in("status", ["approved", "deducted"]);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as DeductionRow[];
+    },
+  });
+}
+
+function groupDeductions(rows: DeductionRow[] | undefined) {
+  const map = new Map<string, DeductionRow[]>();
+  (rows ?? []).forEach((d) => {
+    if (!d.applyToPayrollMonth) return;
+    const key = `${d.employeeId}::${d.applyToPayrollMonth}`;
+    const list = map.get(key) ?? [];
+    list.push(d);
+    map.set(key, list);
+  });
+  return map;
+}
+
+function formatDeductionNote(rows: DeductionRow[]): string {
+  return rows
+    .map((d) => `${d.deductionType.replace(/_/g, " ")}: ${d.currency} ${Number(d.amount).toFixed(2)} — ${d.description}`)
+    .join("\n");
+}
+
+function sumDeductionCents(rows: DeductionRow[]): number {
+  return rows.reduce((sum, d) => sum + Math.round(Number(d.amount) * 100), 0);
+}
+
 type PayrollRecordWithEmployee = any;
+
 
 function EditPayrollDialog({ 
   record, 
   onClose, 
-  currency 
+  currency,
+  deductionsByKey,
 }: { 
   record: PayrollRecordWithEmployee; 
   onClose: () => void;
   currency: string;
+  deductionsByKey: Map<string, DeductionRow[]>;
 }) {
   const { toast } = useToast();
 
@@ -129,6 +199,22 @@ function EditPayrollDialog({
       deductionNotes: record.deductionNotes || "",
     },
   });
+
+  const watchedValues = form.watch();
+
+  // Auto-pull approved deductions for the matching employee + month
+  const matchingDeductions = useMemo(() => {
+    const key = payrollMonthKey(watchedValues.month, watchedValues.payPeriodStart);
+    if (!key || !record.employeeId) return [] as DeductionRow[];
+    return deductionsByKey.get(`${record.employeeId}::${key}`) ?? [];
+  }, [deductionsByKey, record.employeeId, watchedValues.month, watchedValues.payPeriodStart]);
+
+  const pulledTotalCents = sumDeductionCents(matchingDeductions);
+
+  const applyPulledDeductions = () => {
+    form.setValue("deductions", pulledTotalCents, { shouldDirty: true });
+    form.setValue("deductionNotes", formatDeductionNote(matchingDeductions), { shouldDirty: true });
+  };
 
   const updatePayroll = useMutation({
     mutationFn: async (data: EditPayrollFormData) => {
@@ -156,10 +242,10 @@ function EditPayrollDialog({
     updatePayroll.mutate(data);
   };
 
-  const watchedValues = form.watch();
   const overtimeAmount = Math.round((watchedValues.overtimeHours || 0) * (watchedValues.overtimeRate || 0));
   const grossSalary = (watchedValues.baseSalary || 0) + overtimeAmount;
   const netPay = grossSalary - (watchedValues.deductions || 0);
+
 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -293,6 +379,32 @@ function EditPayrollDialog({
             <p className="text-sm text-muted-foreground">Overtime Amount: {formatCurrency(overtimeAmount, currency)}</p>
           </div>
 
+          {matchingDeductions.length > 0 && (
+            <div className="p-3 rounded-lg border border-primary/30 bg-primary/5 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium">
+                  {matchingDeductions.length} approved deduction{matchingDeductions.length === 1 ? "" : "s"} for this month
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={applyPulledDeductions}
+                  data-testid="button-apply-deductions-edit"
+                >
+                  Apply {formatCurrency(pulledTotalCents, currency)}
+                </Button>
+              </div>
+              <ul className="text-xs text-muted-foreground space-y-0.5">
+                {matchingDeductions.map((d) => (
+                  <li key={d.id}>
+                    • {d.deductionType.replace(/_/g, " ")} — {d.currency} {Number(d.amount).toFixed(2)} ({d.description})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <FormField
             control={form.control}
             name="deductions"
@@ -384,6 +496,9 @@ export default function Payroll() {
   });
 
   const currency = settings?.defaultCurrency || "USD";
+
+  const { data: deductionRows } = useApprovedDeductions();
+  const deductionsByKey = useMemo(() => groupDeductions(deductionRows), [deductionRows]);
 
   const form = useForm<PayrollFormData>({
     resolver: zodResolver(payrollFormSchema),
@@ -498,6 +613,32 @@ export default function Payroll() {
   const overtimeAmount = Math.round((watchedValues.overtimeHours || 0) * (watchedValues.overtimeRate || 0));
   const grossSalary = (watchedValues.baseSalary || 0) + overtimeAmount;
   const netPay = grossSalary - (watchedValues.deductions || 0);
+
+  // Auto-pull approved deductions for the create form (employee + month)
+  const createMatchingDeductions = useMemo(() => {
+    const key = payrollMonthKey(watchedValues.month, watchedValues.payPeriodStart);
+    if (!key || !watchedValues.employeeId) return [] as DeductionRow[];
+    return deductionsByKey.get(`${watchedValues.employeeId}::${key}`) ?? [];
+  }, [deductionsByKey, watchedValues.employeeId, watchedValues.month, watchedValues.payPeriodStart]);
+  const createPulledTotalCents = sumDeductionCents(createMatchingDeductions);
+
+  // Auto-prefill deductions when the matching set changes (only if user hasn't typed something different)
+  useEffect(() => {
+    if (!isCreateDialogOpen) return;
+    if (createMatchingDeductions.length === 0) return;
+    const currentDeductions = form.getValues("deductions") || 0;
+    const currentNotes = form.getValues("deductionNotes") || "";
+    if (currentDeductions === 0 && currentNotes === "") {
+      form.setValue("deductions", createPulledTotalCents, { shouldDirty: false });
+      form.setValue("deductionNotes", formatDeductionNote(createMatchingDeductions), { shouldDirty: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createMatchingDeductions, isCreateDialogOpen]);
+
+  const applyCreatePulledDeductions = () => {
+    form.setValue("deductions", createPulledTotalCents, { shouldDirty: true });
+    form.setValue("deductionNotes", formatDeductionNote(createMatchingDeductions), { shouldDirty: true });
+  };
 
   // Filter records by month
   const filteredRecords = payrollRecords?.filter(record => 
@@ -697,6 +838,32 @@ export default function Payroll() {
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <p className="text-sm text-muted-foreground">Overtime Amount: {formatCurrency(overtimeAmount, currency)}</p>
                   </div>
+
+                  {createMatchingDeductions.length > 0 && (
+                    <div className="p-3 rounded-lg border border-primary/30 bg-primary/5 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium">
+                          {createMatchingDeductions.length} approved deduction{createMatchingDeductions.length === 1 ? "" : "s"} for this employee/month
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={applyCreatePulledDeductions}
+                          data-testid="button-apply-deductions-create"
+                        >
+                          Apply {formatCurrency(createPulledTotalCents, currency)}
+                        </Button>
+                      </div>
+                      <ul className="text-xs text-muted-foreground space-y-0.5">
+                        {createMatchingDeductions.map((d) => (
+                          <li key={d.id}>
+                            • {d.deductionType.replace(/_/g, " ")} — {d.currency} {Number(d.amount).toFixed(2)} ({d.description})
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                   <FormField
                     control={form.control}
@@ -901,6 +1068,7 @@ export default function Payroll() {
                                   <EditPayrollDialog
                                     record={record}
                                     currency={currency}
+                                    deductionsByKey={deductionsByKey}
                                     onClose={() => setEditingRecord(null)}
                                   />
                                 )}
@@ -1020,6 +1188,7 @@ export default function Payroll() {
           <EditPayrollDialog
             record={editingRecord}
             currency={currency}
+            deductionsByKey={deductionsByKey}
             onClose={() => setEditingRecord(null)}
           />
         </Dialog>
