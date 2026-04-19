@@ -20,11 +20,11 @@ export interface PayslipEmployee {
   email: string;
 }
 
-const fmtMoney = (dollars: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
+const fmtMoney = (dollars: number, currency = "USD") =>
+  new Intl.NumberFormat(undefined, { style: "currency", currency: (currency || "USD").toUpperCase() })
     .format(dollars ?? 0);
 
-export function downloadPayslipPdf(p: PayslipData, e: PayslipEmployee, companyName = "Company") {
+export function downloadPayslipPdf(p: PayslipData, e: PayslipEmployee, companyName = "Company", currency = "USD") {
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const W = doc.internal.pageSize.getWidth();
   let y = 56;
