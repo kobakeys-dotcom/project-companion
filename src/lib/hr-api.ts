@@ -119,6 +119,37 @@ export async function hrFetch(path: string, segments: unknown[]): Promise<unknow
   if (path === "/api/jobs") return listByCompany("jobs");
   if (path === "/api/job-candidates") return listByCompany("job_candidates");
 
+  // ---- Company-wide settings ----
+  if (path === "/api/settings") {
+    const companyId = await getCallerCompanyId();
+    const { data: existing, error } = await sb
+      .from("company_settings")
+      .select("*")
+      .eq("companyId", companyId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (existing) return existing;
+    const { data: company } = await sb
+      .from("companies")
+      .select("name")
+      .eq("id", companyId)
+      .maybeSingle();
+    const { data: created, error: insertErr } = await sb
+      .from("company_settings")
+      .insert({ companyId, companyName: company?.name ?? null })
+      .select()
+      .single();
+    if (insertErr) {
+      const { data: again } = await sb
+        .from("company_settings")
+        .select("*")
+        .eq("companyId", companyId)
+        .maybeSingle();
+      return again ?? null;
+    }
+    return created;
+  }
+
   // Unknown — return empty so legacy keys don't crash
   return null;
 }
