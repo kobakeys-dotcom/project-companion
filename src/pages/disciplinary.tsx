@@ -52,7 +52,7 @@ interface EmployeeLite {
   jobTitle: string | null;
 }
 
-const ACTION_LABELS: Record<string, string> & { [k in ActionType]: string } = {
+const ACTION_LABELS: { [k in ActionType]: string } = {
   verbal_warning: "Verbal Warning",
   warning_letter_1: "Warning Letter 1",
   warning_letter_2: "Warning Letter 2",
