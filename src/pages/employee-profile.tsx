@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompanySettings, formatMoney, formatMoneyCents } from "@/hooks/use-company-settings";
 import {
   ArrowLeft,
   Mail,
@@ -171,28 +172,27 @@ export default function EmployeeProfilePage() {
     enabled: !!employee?.companyId,
   });
 
-  const { data: settings } = useQuery<CompanySettings>({
-    queryKey: ["/api/settings"],
+  const { data: settings } = useCompanySettings();
+
+  // Dynamic leave types configured for this company.
+  const { data: leaveTypes = [] } = useQuery<Array<{ id: string; name: string; color: string | null; daysAllowed: number }>>({
+    queryKey: ["employee-profile-leave-types", employee?.companyId],
+    enabled: !!employee?.companyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leave_types")
+        .select("id, name, color, daysAllowed")
+        .eq("companyId", employee!.companyId)
+        .eq("isActive", true)
+        .order("name");
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
   });
 
   const currency = settings?.defaultCurrency || "USD";
-  
-  const formatCurrency = (cents: number) => {
-    try {
-      return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cents / 100);
-    } catch {
-      return `${currency} ${(cents / 100).toFixed(2)}`;
-    }
-  };
-
-  // Format salary values (stored in whole currency units, not cents)
-  const formatSalary = (amount: number) => {
-    try {
-      return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
-    } catch {
-      return `${currency} ${amount.toLocaleString()}`;
-    }
-  };
+  const formatCurrency = (cents: number) => formatMoneyCents(cents, currency);
+  const formatSalary = (amount: number) => formatMoney(amount, currency);
 
   const completeOnboardingTask = useMutation({
     mutationFn: async (taskId: string) => {
