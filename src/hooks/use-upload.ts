@@ -6,6 +6,7 @@
  */
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { compressIfImage } from "@/lib/compress-image";
 
 interface UploadResponse {
   objectPath: string;
@@ -36,13 +37,15 @@ export function useUpload(options: UseUploadOptions = {}) {
     if (!file) throw new Error("No file selected");
     setIsUploading(true);
     try {
+      // Compress images >300KB to cut storage/bandwidth costs
+      const finalFile = await compressIfImage(file);
       const companyId = await getCallerCompanyId();
-      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const safe = finalFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const path = `${companyId}/${Date.now()}-${safe}`;
 
       const { error: upErr } = await supabase.storage
         .from("documents")
-        .upload(path, file, { upsert: false, contentType: file.type });
+        .upload(path, finalFile, { upsert: false, contentType: finalFile.type });
       if (upErr) throw new Error(upErr.message);
 
       // Signed URL good for 1 year (renew client-side as needed).
