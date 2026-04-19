@@ -17,6 +17,17 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -298,6 +309,61 @@ function LeaveRequestCard({
   const effectiveEndDate = request.actualReturnDate || request.endDate;
   const days = differenceInDays(parseISO(effectiveEndDate), parseISO(request.startDate)) + 1;
 
+  // CRUD / return-date dialogs (only meaningful for processed requests)
+  const isProcessed = request.status === "approved" || request.status === "rejected";
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [returnOpen, setReturnOpen] = useState(false);
+  const [editStart, setEditStart] = useState(request.startDate);
+  const [editEnd, setEditEnd] = useState(request.endDate);
+  const [editReason, setEditReason] = useState(request.reason ?? "");
+  const [editStatus, setEditStatus] = useState<string>(request.status);
+  const [editReturn, setEditReturn] = useState(request.actualReturnDate ?? "");
+
+  const updateRequestMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      return await apiRequest("PATCH", `/api/time-off/${request.id}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/time-off"] });
+      toast({ title: "Leave request updated" });
+      setEditOpen(false);
+      onRefresh();
+    },
+    onError: (e: any) =>
+      toast({ title: "Update failed", description: e?.message, variant: "destructive" }),
+  });
+
+  const deleteRequestMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("DELETE", `/api/time-off/${request.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/time-off"] });
+      toast({ title: "Leave request deleted" });
+      setDeleteOpen(false);
+      onRefresh();
+    },
+    onError: (e: any) =>
+      toast({ title: "Delete failed", description: e?.message, variant: "destructive" }),
+  });
+
+  const setReturnDateMutation = useMutation({
+    mutationFn: async (date: string | null) => {
+      return await apiRequest("PATCH", `/api/time-off/${request.id}/return-date`, {
+        actualReturnDate: date,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/time-off"] });
+      toast({ title: "Return date updated" });
+      setReturnOpen(false);
+      onRefresh();
+    },
+    onError: (e: any) =>
+      toast({ title: "Failed to update return date", description: e?.message, variant: "destructive" }),
+  });
+
   const baseUrl = window.location.origin;
   const [tokens, setTokens] = useState<{ dept_token?: string; mgmt_token?: string } | null>(null);
   const deptApprovalLink = tokens?.dept_token
@@ -559,8 +625,185 @@ function LeaveRequestCard({
               )}
             </div>
           )}
+
+          {/* CRUD + Set Return for processed requests */}
+          {isProcessed && (
+            <div className="flex flex-wrap gap-2 border-t pt-3">
+              {request.status === "approved" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setEditReturn(request.actualReturnDate ?? "");
+                    setReturnOpen(true);
+                  }}
+                  data-testid={`button-set-return-card-${request.id}`}
+                >
+                  <Calendar className="h-4 w-4 mr-1" />
+                  {request.actualReturnDate ? "Update Return Date" : "Set Return Date"}
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setEditStart(request.startDate);
+                  setEditEnd(request.endDate);
+                  setEditReason(request.reason ?? "");
+                  setEditStatus(request.status);
+                  setEditReturn(request.actualReturnDate ?? "");
+                  setEditOpen(true);
+                }}
+                data-testid={`button-edit-request-${request.id}`}
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setDeleteOpen(true)}
+                data-testid={`button-delete-request-${request.id}`}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
+
+      {/* Set Return Date Dialog */}
+      <Dialog open={returnOpen} onOpenChange={setReturnOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Set Return Date</DialogTitle>
+            <DialogDescription>
+              Enter the actual date the employee returned (early or late).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Actual Return Date</Label>
+              <Input
+                type="date"
+                value={editReturn}
+                onChange={(e) => setEditReturn(e.target.value)}
+                data-testid={`input-card-return-date-${request.id}`}
+              />
+              <p className="text-xs text-muted-foreground">
+                Original end date: {format(parseISO(request.endDate), "MMM d, yyyy")}
+              </p>
+            </div>
+            <div className="flex justify-between gap-2">
+              {request.actualReturnDate && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setReturnDateMutation.mutate(null)}
+                  disabled={setReturnDateMutation.isPending}
+                >
+                  Clear
+                </Button>
+              )}
+              <div className="flex gap-2 ml-auto">
+                <Button variant="outline" onClick={() => setReturnOpen(false)}>Cancel</Button>
+                <Button
+                  onClick={() => editReturn && setReturnDateMutation.mutate(editReturn)}
+                  disabled={!editReturn || setReturnDateMutation.isPending}
+                  data-testid={`button-save-card-return-${request.id}`}
+                >
+                  {setReturnDateMutation.isPending ? "Saving..." : "Save"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Request Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Leave Request</DialogTitle>
+            <DialogDescription>Update dates, status, return date, or reason.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <Label>Start Date</Label>
+                <Input type="date" value={editStart} onChange={(e) => setEditStart(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>End Date</Label>
+                <Input type="date" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={editStatus} onValueChange={setEditStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Actual Return Date (optional)</Label>
+              <Input type="date" value={editReturn} onChange={(e) => setEditReturn(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Reason</Label>
+              <Textarea value={editReason} onChange={(e) => setEditReason(e.target.value)} />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+              <Button
+                onClick={() =>
+                  updateRequestMutation.mutate({
+                    startDate: editStart,
+                    endDate: editEnd,
+                    status: editStatus,
+                    actualReturnDate: editReturn || null,
+                    reason: editReason || null,
+                  })
+                }
+                disabled={!editStart || !editEnd || updateRequestMutation.isPending}
+                data-testid={`button-save-edit-request-${request.id}`}
+              >
+                {updateRequestMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirm */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this leave request?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the record. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                deleteRequestMutation.mutate();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteRequestMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
