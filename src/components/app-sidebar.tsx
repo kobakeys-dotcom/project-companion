@@ -29,6 +29,8 @@ import {
   Fingerprint,
   Camera,
   ClipboardCheck,
+  UtensilsCrossed,
+  ShieldAlert,
 } from "lucide-react";
 import {
   Sidebar,
@@ -61,6 +63,8 @@ const menuItems = [
   { title: "Expenses", url: "/expenses", icon: Receipt },
   { title: "Performance", url: "/performance", icon: Target },
   { title: "Appraisals", url: "/appraisals", icon: ClipboardCheck },
+  { title: "Service Charges", url: "/service-charges", icon: UtensilsCrossed },
+  { title: "Disciplinary", url: "/disciplinary", icon: ShieldAlert },
   { title: "Departments", url: "/departments", icon: Building2 },
   { title: "Projects / Branches", url: "/projects", icon: FolderKanban },
   { title: "Accommodations", url: "/accommodations", icon: Home },
