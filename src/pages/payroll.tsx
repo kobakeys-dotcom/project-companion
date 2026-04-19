@@ -497,6 +497,9 @@ export default function Payroll() {
 
   const currency = settings?.defaultCurrency || "USD";
 
+  const { data: deductionRows } = useApprovedDeductions();
+  const deductionsByKey = useMemo(() => groupDeductions(deductionRows), [deductionRows]);
+
   const form = useForm<PayrollFormData>({
     resolver: zodResolver(payrollFormSchema),
     defaultValues: {
