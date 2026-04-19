@@ -68,7 +68,8 @@ function GeofenceFields({ form }: { form: ReturnType<typeof useForm<ProjectFormD
     }
     setLocating(true);
     const targetAccuracyMeters = 100;
-    const maxWaitMs = 20000;
+    const acceptableAccuracyMeters = 5000;
+    const maxWaitMs = 15000;
     let bestPosition: GeolocationPosition | null = null;
     let finished = false;
     let watchId = 0;
@@ -125,17 +126,19 @@ function GeofenceFields({ form }: { form: ReturnType<typeof useForm<ProjectFormD
     );
 
     timeoutId = window.setTimeout(() => {
-      if (bestPosition && bestPosition.coords.accuracy <= targetAccuracyMeters) {
+      if (bestPosition) {
+        // Accept whatever fix we have, but warn if it's coarse.
+        if (bestPosition.coords.accuracy > targetAccuracyMeters) {
+          toast({
+            title: "Low accuracy location",
+            description: `Best fix was ±${Math.round(bestPosition.coords.accuracy)}m. You can drag the marker on the map to fine-tune.`,
+          });
+        }
         finish(bestPosition);
         return;
       }
 
-      finish(
-        undefined,
-        bestPosition
-          ? `Best fix was only ±${Math.round(bestPosition.coords.accuracy)}m. Enable precise location and try again.`
-          : "No reliable GPS fix was found. Enable precise location and try again.",
-      );
+      finish(undefined, "No GPS fix was found. Enable location services and try again.");
     }, maxWaitMs);
   };
 
