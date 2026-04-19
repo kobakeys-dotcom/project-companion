@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompanySettings, formatMoney, formatMoneyCents } from "@/hooks/use-company-settings";
 import {
   ArrowLeft,
   Mail,
@@ -171,28 +172,27 @@ export default function EmployeeProfilePage() {
     enabled: !!employee?.companyId,
   });
 
-  const { data: settings } = useQuery<CompanySettings>({
-    queryKey: ["/api/settings"],
+  const { data: settings } = useCompanySettings();
+
+  // Dynamic leave types configured for this company.
+  const { data: leaveTypes = [] } = useQuery<Array<{ id: string; name: string; color: string | null; daysAllowed: number }>>({
+    queryKey: ["employee-profile-leave-types", employee?.companyId],
+    enabled: !!employee?.companyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leave_types")
+        .select("id, name, color, daysAllowed")
+        .eq("companyId", employee!.companyId)
+        .eq("isActive", true)
+        .order("name");
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
   });
 
   const currency = settings?.defaultCurrency || "USD";
-  
-  const formatCurrency = (cents: number) => {
-    try {
-      return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cents / 100);
-    } catch {
-      return `${currency} ${(cents / 100).toFixed(2)}`;
-    }
-  };
-
-  // Format salary values (stored in whole currency units, not cents)
-  const formatSalary = (amount: number) => {
-    try {
-      return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
-    } catch {
-      return `${currency} ${amount.toLocaleString()}`;
-    }
-  };
+  const formatCurrency = (cents: number) => formatMoneyCents(cents, currency);
+  const formatSalary = (amount: number) => formatMoney(amount, currency);
 
   const completeOnboardingTask = useMutation({
     mutationFn: async (taskId: string) => {
@@ -380,6 +380,22 @@ export default function EmployeeProfilePage() {
     }
   };
 
+  // Days used per leave type, computed from approved time-off requests this calendar year.
+  const leaveUsedByType: Record<string, number> = (() => {
+    const out: Record<string, number> = {};
+    if (!timeOffRequests) return out;
+    const yearStart = `${new Date().getFullYear()}-01-01`;
+    for (const r of timeOffRequests) {
+      if (r.status !== "approved" || !r.leaveTypeId) continue;
+      if (r.endDate < yearStart) continue;
+      const start = new Date(r.startDate + "T00:00:00");
+      const end = new Date((r.actualReturnDate ?? r.endDate) + "T00:00:00");
+      const days = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000) + 1);
+      out[r.leaveTypeId] = (out[r.leaveTypeId] ?? 0) + days;
+    }
+    return out;
+  })();
+
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between gap-3">
@@ -506,47 +522,53 @@ export default function EmployeeProfilePage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  Vacation Days
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Used</span>
-                  <span className="font-medium">
-                    {employee.vacationDaysUsed || 0} / {employee.vacationDaysTotal || 0} days
-                  </span>
-                </div>
-                <Progress value={vacationProgress} className="h-2" />
-                <p className="text-xs text-muted-foreground">
-                  {(employee.vacationDaysTotal || 0) - (employee.vacationDaysUsed || 0)} days remaining
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  Sick Days
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Used</span>
-                  <span className="font-medium">
-                    {employee.sickDaysUsed || 0} / {employee.sickDaysTotal || 0} days
-                  </span>
-                </div>
-                <Progress value={sickProgress} className="h-2" />
-                <p className="text-xs text-muted-foreground">
-                  {(employee.sickDaysTotal || 0) - (employee.sickDaysUsed || 0)} days remaining
-                </p>
-              </CardContent>
-            </Card>
+            {leaveTypes.length === 0 ? (
+              <Card className="md:col-span-2">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    Leave Balances
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    No leave types configured for this company yet.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              leaveTypes.map((lt) => {
+                const used = leaveUsedByType[lt.id] ?? 0;
+                const total = lt.daysAllowed ?? 0;
+                const remaining = Math.max(0, total - used);
+                const progress = total > 0 ? Math.min(100, (used / total) * 100) : 0;
+                return (
+                  <Card key={lt.id}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <span
+                          className="inline-block h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: lt.color || "hsl(var(--primary))" }}
+                        />
+                        {lt.name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-muted-foreground">Used</span>
+                        <span className="font-medium">
+                          {used} / {total} days
+                        </span>
+                      </div>
+                      <Progress value={progress} className="h-2" />
+                      <p className="text-xs text-muted-foreground">
+                        {total > 0 ? `${remaining} days remaining` : "No allowance set"}
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
           </div>
 
           {/* Salary Package Section */}

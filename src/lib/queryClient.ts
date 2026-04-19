@@ -29,6 +29,7 @@ const SUPPORTED_PATH_PREFIXES = [
   "/api/performance-reviews",
   "/api/jobs",
   "/api/job-candidates",
+  "/api/settings",
 ];
 
 function isSupported(path: string) {

@@ -119,6 +119,37 @@ export async function hrFetch(path: string, segments: unknown[]): Promise<unknow
   if (path === "/api/jobs") return listByCompany("jobs");
   if (path === "/api/job-candidates") return listByCompany("job_candidates");
 
+  // ---- Company-wide settings ----
+  if (path === "/api/settings") {
+    const companyId = await getCallerCompanyId();
+    const { data: existing, error } = await sb
+      .from("company_settings")
+      .select("*")
+      .eq("companyId", companyId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (existing) return existing;
+    const { data: company } = await sb
+      .from("companies")
+      .select("name")
+      .eq("id", companyId)
+      .maybeSingle();
+    const { data: created, error: insertErr } = await sb
+      .from("company_settings")
+      .insert({ companyId, companyName: company?.name ?? null })
+      .select()
+      .single();
+    if (insertErr) {
+      const { data: again } = await sb
+        .from("company_settings")
+        .select("*")
+        .eq("companyId", companyId)
+        .maybeSingle();
+      return again ?? null;
+    }
+    return created;
+  }
+
   // Unknown — return empty so legacy keys don't crash
   return null;
 }
@@ -385,6 +416,34 @@ export async function hrMutate(
   }
   const candMatch = path.match(/^\/api\/job-candidates\/([^/]+)$/);
   if (candMatch) return updateOrDelete("job_candidates", candMatch[1], method, body);
+
+  // ---- Company-wide settings ----
+  if (path === "/api/settings" && method === "PATCH") {
+    const companyId = await getCallerCompanyId();
+    // Ensure a row exists, then update it.
+    const { data: existing } = await sb
+      .from("company_settings")
+      .select("id")
+      .eq("companyId", companyId)
+      .maybeSingle();
+    if (!existing) {
+      const { data: created, error } = await sb
+        .from("company_settings")
+        .insert({ companyId, ...(body as object) })
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return created;
+    }
+    const { data, error } = await sb
+      .from("company_settings")
+      .update(body as object)
+      .eq("companyId", companyId)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
 
   throw new Error(`Unsupported ${method} ${path}`);
 }
