@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompanySettings } from "@/hooks/use-company-settings";
 import { Plus, UtensilsCrossed, Hotel, Wallet, Users, Trash2, Check } from "lucide-react";
 import { format } from "date-fns";
 
@@ -58,7 +59,9 @@ const outletIcon = (t: OutletType) =>
 export default function ServiceChargesPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { data: settings } = useCompanySettings();
   const companyId = user?.companyId ?? null;
+  const companyCurrency = settings?.defaultCurrency || "USD";
 
   const [loading, setLoading] = useState(true);
   const [pools, setPools] = useState<Pool[]>([]);
@@ -74,12 +77,17 @@ export default function ServiceChargesPage() {
     periodStart: format(new Date(), "yyyy-MM-01"),
     periodEnd: format(new Date(), "yyyy-MM-dd"),
     totalAmount: "",
-    currency: "USD",
+    currency: companyCurrency,
     distributionMethod: "equal" as Distribution,
     notes: "",
     employeeIds: [] as string[],
     weights: {} as Record<string, string>,
   });
+
+  // Keep form currency synced when settings load / change.
+  useEffect(() => {
+    setForm((f) => ({ ...f, currency: companyCurrency }));
+  }, [companyCurrency]);
 
   const loadAll = async () => {
     if (!companyId) return;
@@ -180,7 +188,7 @@ export default function ServiceChargesPage() {
       periodStart: format(new Date(), "yyyy-MM-01"),
       periodEnd: format(new Date(), "yyyy-MM-dd"),
       totalAmount: "",
-      currency: "USD",
+      currency: companyCurrency,
       distributionMethod: "equal",
       notes: "",
       employeeIds: [],
@@ -263,7 +271,7 @@ export default function ServiceChargesPage() {
               </div>
               <div>
                 <Label>Currency</Label>
-                <Input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} />
+                <Input value={form.currency} readOnly disabled className="bg-muted" />
               </div>
               <div className="col-span-2">
                 <Label>Distribution method</Label>
