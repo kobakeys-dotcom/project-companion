@@ -343,7 +343,7 @@ export default function ReportsPage() {
         />
         <StatCard
           title="Total Payroll"
-          value={`$${(totalPayroll / 100).toLocaleString()}`}
+          value={formatMoneyCents(totalPayroll, currency)}
           subtitle="This period"
           icon={DollarSign}
         />
