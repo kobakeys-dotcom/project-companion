@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowLeft,
   Mail,
@@ -46,10 +47,24 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import type { Employee, Department, TimeOffRequest, Document, OnboardingTask, Goal, PayrollRecord, TimeEntry, Skill, Certification, Company, CompanySettings } from "@shared/schema";
+import type { Employee, Department, Document, OnboardingTask, Goal, PayrollRecord, TimeEntry, Skill, Certification, Company, CompanySettings } from "@shared/schema";
 import { differenceInMinutes } from "date-fns";
 import { format, parseISO } from "date-fns";
 import { CompensationHistory } from "@/components/compensation-history";
+
+type EmployeeTimeOffRequest = {
+  id: string;
+  leaveTypeId: string | null;
+  type: string | null;
+  startDate: string;
+  endDate: string;
+  actualReturnDate: string | null;
+  status: string;
+  leaveType: {
+    name: string;
+    color: string | null;
+  } | null;
+};
 
 function ProfileSkeleton() {
   return (
@@ -89,9 +104,31 @@ export default function EmployeeProfilePage() {
     enabled: !!employee?.departmentId,
   });
 
-  const { data: timeOffRequests } = useQuery<TimeOffRequest[]>({
-    queryKey: ["/api/employees", id, "time-off"],
+  const { data: timeOffRequests } = useQuery<EmployeeTimeOffRequest[]>({
+    queryKey: ["employee-profile-time-off", id],
     enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("time_off_requests")
+        .select(`
+          id,
+          leaveTypeId,
+          type,
+          startDate,
+          endDate,
+          actualReturnDate,
+          status,
+          leaveType:leaveTypeId (
+            name,
+            color
+          )
+        `)
+        .eq("employeeId", id)
+        .order("createdAt", { ascending: false });
+
+      if (error) throw new Error(error.message);
+      return (data ?? []) as unknown as EmployeeTimeOffRequest[];
+    },
   });
 
   const { data: documents } = useQuery<Document[]>({
@@ -1096,28 +1133,37 @@ export default function EmployeeProfilePage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {timeOffRequests.map((request) => (
-                    <div key={request.id} className="flex items-center justify-between p-3 rounded-lg border">
-                      <div>
-                        <p className="font-medium capitalize">{request.type.replace("_", " ")}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {format(parseISO(request.startDate), "MMM d")} -{" "}
-                          {format(parseISO(request.endDate), "MMM d, yyyy")}
-                        </p>
+                  {timeOffRequests.map((request) => {
+                    const requestLabel = request.leaveType?.name ?? request.type?.replace(/_/g, " ") ?? "Leave";
+
+                    return (
+                      <div key={request.id} className="flex items-center justify-between p-3 rounded-lg border">
+                        <div>
+                          <p className="font-medium capitalize">{requestLabel}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {format(parseISO(request.startDate), "MMM d")} -{" "}
+                            {format(parseISO(request.endDate), "MMM d, yyyy")}
+                          </p>
+                          {request.actualReturnDate && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Returned: {format(parseISO(request.actualReturnDate), "MMM d, yyyy")}
+                            </p>
+                          )}
+                        </div>
+                        <Badge
+                          className={
+                            request.status === "approved"
+                              ? "bg-green-500/10 text-green-600"
+                              : request.status === "rejected"
+                              ? "bg-red-500/10 text-red-600"
+                              : "bg-yellow-500/10 text-yellow-600"
+                          }
+                        >
+                          {request.status}
+                        </Badge>
                       </div>
-                      <Badge
-                        className={
-                          request.status === "approved"
-                            ? "bg-green-500/10 text-green-600"
-                            : request.status === "rejected"
-                            ? "bg-red-500/10 text-red-600"
-                            : "bg-yellow-500/10 text-yellow-600"
-                        }
-                      >
-                        {request.status}
-                      </Badge>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
