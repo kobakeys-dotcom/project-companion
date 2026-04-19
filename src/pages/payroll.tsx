@@ -379,6 +379,32 @@ function EditPayrollDialog({
             <p className="text-sm text-muted-foreground">Overtime Amount: {formatCurrency(overtimeAmount, currency)}</p>
           </div>
 
+          {matchingDeductions.length > 0 && (
+            <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium">
+                  {matchingDeductions.length} approved deduction{matchingDeductions.length === 1 ? "" : "s"} for this month
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={applyPulledDeductions}
+                  data-testid="button-apply-deductions-edit"
+                >
+                  Apply {formatCurrency(pulledTotalCents, currency)}
+                </Button>
+              </div>
+              <ul className="text-xs text-muted-foreground space-y-0.5">
+                {matchingDeductions.map((d) => (
+                  <li key={d.id}>
+                    • {d.deductionType.replace(/_/g, " ")} — {d.currency} {Number(d.amount).toFixed(2)} ({d.description})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <FormField
             control={form.control}
             name="deductions"
