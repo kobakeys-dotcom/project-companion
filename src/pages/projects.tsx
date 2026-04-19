@@ -68,7 +68,8 @@ function GeofenceFields({ form }: { form: ReturnType<typeof useForm<ProjectFormD
     }
     setLocating(true);
     const targetAccuracyMeters = 100;
-    const maxWaitMs = 20000;
+    const acceptableAccuracyMeters = 5000;
+    const maxWaitMs = 15000;
     let bestPosition: GeolocationPosition | null = null;
     let finished = false;
     let watchId = 0;
