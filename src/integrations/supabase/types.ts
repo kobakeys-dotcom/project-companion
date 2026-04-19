@@ -317,6 +317,84 @@ export type Database = {
           },
         ]
       }
+      deductions: {
+        Row: {
+          amount: number
+          applyToPayrollMonth: string | null
+          approvedAt: string | null
+          companyId: string
+          createdAt: string
+          currency: string
+          deductionType: Database["public"]["Enums"]["deduction_type"]
+          description: string
+          employeeId: string
+          evidenceName: string | null
+          evidenceUrl: string | null
+          id: string
+          incidentDate: string
+          notes: string | null
+          reportedBy: string | null
+          reportedByName: string | null
+          status: Database["public"]["Enums"]["deduction_status"]
+          updatedAt: string
+        }
+        Insert: {
+          amount?: number
+          applyToPayrollMonth?: string | null
+          approvedAt?: string | null
+          companyId: string
+          createdAt?: string
+          currency?: string
+          deductionType: Database["public"]["Enums"]["deduction_type"]
+          description: string
+          employeeId: string
+          evidenceName?: string | null
+          evidenceUrl?: string | null
+          id?: string
+          incidentDate?: string
+          notes?: string | null
+          reportedBy?: string | null
+          reportedByName?: string | null
+          status?: Database["public"]["Enums"]["deduction_status"]
+          updatedAt?: string
+        }
+        Update: {
+          amount?: number
+          applyToPayrollMonth?: string | null
+          approvedAt?: string | null
+          companyId?: string
+          createdAt?: string
+          currency?: string
+          deductionType?: Database["public"]["Enums"]["deduction_type"]
+          description?: string
+          employeeId?: string
+          evidenceName?: string | null
+          evidenceUrl?: string | null
+          id?: string
+          incidentDate?: string
+          notes?: string | null
+          reportedBy?: string | null
+          reportedByName?: string | null
+          status?: Database["public"]["Enums"]["deduction_status"]
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deductions_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deductions_employeeId_fkey"
+            columns: ["employeeId"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           color: string | null
@@ -1707,6 +1785,14 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "admin" | "manager" | "employee"
+      deduction_status: "pending" | "approved" | "deducted" | "waived"
+      deduction_type:
+        | "accommodation_damage"
+        | "wrong_order"
+        | "equipment_loss"
+        | "cash_shortage"
+        | "uniform_damage"
+        | "other"
       disciplinary_action_type:
         | "verbal_warning"
         | "warning_letter_1"
@@ -1850,6 +1936,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "admin", "manager", "employee"],
+      deduction_status: ["pending", "approved", "deducted", "waived"],
+      deduction_type: [
+        "accommodation_damage",
+        "wrong_order",
+        "equipment_loss",
+        "cash_shortage",
+        "uniform_damage",
+        "other",
+      ],
       disciplinary_action_type: [
         "verbal_warning",
         "warning_letter_1",
