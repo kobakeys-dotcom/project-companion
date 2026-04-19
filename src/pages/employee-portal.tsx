@@ -1089,7 +1089,7 @@ export default function EmployeePortal() {
                             </p>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="font-semibold">{fmtMoney(e.amount)}</span>
+                            <span className="font-semibold">{fmtMoney(e.amount, currency)}</span>
                             {e.receiptUrl && (
                               <Button
                                 variant="outline"
@@ -1159,10 +1159,10 @@ export default function EmployeePortal() {
                           </div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                          <div><p className="text-muted-foreground">Base</p><p className="font-medium">{fmtMoney(p.baseSalary)}</p></div>
-                          <div><p className="text-muted-foreground">Overtime</p><p className="font-medium">{fmtMoney(p.overtimeAmount)}</p></div>
-                          <div><p className="text-muted-foreground">Deductions</p><p className="font-medium">−{fmtMoney(p.deductions)}</p></div>
-                          <div><p className="text-muted-foreground">Net Pay</p><p className="font-bold text-primary">{fmtMoney(p.netPay)}</p></div>
+                          <div><p className="text-muted-foreground">Base</p><p className="font-medium">{fmtMoney(p.baseSalary, currency)}</p></div>
+                          <div><p className="text-muted-foreground">Overtime</p><p className="font-medium">{fmtMoney(p.overtimeAmount, currency)}</p></div>
+                          <div><p className="text-muted-foreground">Deductions</p><p className="font-medium">−{fmtMoney(p.deductions, currency)}</p></div>
+                          <div><p className="text-muted-foreground">Net Pay</p><p className="font-bold text-primary">{fmtMoney(p.netPay, currency)}</p></div>
                         </div>
                       </div>
                     ))}
@@ -1194,11 +1194,11 @@ export default function EmployeePortal() {
                         {b.coverageDetails && <p className="text-sm mb-2">{b.coverageDetails}</p>}
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Your share</span>
-                          <span className="font-medium">{fmtMoney(b.employeeContribution)}</span>
+                          <span className="font-medium">{fmtMoney(b.employeeContribution, currency)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Employer share</span>
-                          <span className="font-medium">{fmtMoney(b.employerContribution)}</span>
+                          <span className="font-medium">{fmtMoney(b.employerContribution, currency)}</span>
                         </div>
                       </div>
                     ))}
@@ -1333,7 +1333,7 @@ export default function EmployeePortal() {
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="font-semibold">{fmtMoney(s.shareAmount)}</span>
+                          <span className="font-semibold">{fmtMoney(s.shareAmount, currency)}</span>
                           <StatusBadge status={s.payoutStatus} />
                         </div>
                       </div>
@@ -1440,7 +1440,7 @@ export default function EmployeePortal() {
                             </p>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="font-semibold text-destructive">−{fmtMoney(d.amount)}</span>
+                            <span className="font-semibold text-destructive">−{fmtMoney(d.amount, currency)}</span>
                             <StatusBadge status={d.status} />
                           </div>
                         </div>
