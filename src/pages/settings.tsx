@@ -162,6 +162,7 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["company-settings"] });
       toast({ title: "Settings saved successfully" });
     },
     onError: (error: Error) => {
