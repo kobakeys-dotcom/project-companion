@@ -410,28 +410,64 @@ interface TimeEntryRow {
   date: string;
 }
 
-function getPosition(): Promise<GeolocationPosition | null> {
+/**
+ * Get a high-accuracy GPS fix.
+ *
+ * Browsers often return a coarse cached/Wi-Fi/IP fix first (hundreds or
+ * thousands of metres). We use watchPosition and keep the best reading until
+ * either:
+ *   - accuracy is good enough (≤ desiredAccuracy metres), or
+ *   - the overall timeout elapses — then we return the best reading we got.
+ */
+function getPosition(
+  desiredAccuracy = 30,
+  overallTimeoutMs = 15000,
+): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
     if (!("geolocation" in navigator)) {
       return reject(new Error("Geolocation is not supported by this browser."));
     }
-    navigator.geolocation.getCurrentPosition(
-      (p) => resolve(p),
-      (err) => {
+
+    let best: GeolocationPosition | null = null;
+    let settled = false;
+
+    const finish = (pos: GeolocationPosition | null, err?: GeolocationPositionError) => {
+      if (settled) return;
+      settled = true;
+      navigator.geolocation.clearWatch(watchId);
+      clearTimeout(timer);
+      if (pos) return resolve(pos);
+      if (err) {
         if (err.code === err.PERMISSION_DENIED) {
-          reject(new Error("Location permission denied. Allow location access in your browser settings to clock in."));
-        } else if (err.code === err.POSITION_UNAVAILABLE) {
-          reject(new Error("Location unavailable. Check your device's location services."));
-        } else if (err.code === err.TIMEOUT) {
-          reject(new Error("Location request timed out. Try again."));
-        } else {
-          reject(new Error(err.message || "Could not get your location."));
+          return reject(new Error("Location permission denied. Allow location access in your browser settings to clock in."));
         }
+        if (err.code === err.POSITION_UNAVAILABLE) {
+          return reject(new Error("Location unavailable. Enable GPS / location services on your device and try again outdoors."));
+        }
+        if (err.code === err.TIMEOUT) {
+          return reject(new Error("Location request timed out. Move to an open area and try again."));
+        }
+        return reject(new Error(err.message || "Could not get your location."));
+      }
+      reject(new Error("Could not get your location."));
+    };
+
+    const watchId = navigator.geolocation.watchPosition(
+      (p) => {
+        if (!best || p.coords.accuracy < best.coords.accuracy) best = p;
+        if (p.coords.accuracy <= desiredAccuracy) finish(p);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60_000 }
+      (err) => {
+        // Only fail hard if we never got any reading.
+        if (!best) finish(null, err);
+      },
+      { enableHighAccuracy: true, timeout: overallTimeoutMs, maximumAge: 0 },
     );
+
+    const timer = setTimeout(() => finish(best), overallTimeoutMs);
   });
 }
+
 
 function TimeClockCard({ employee }: { employee: Employee }) {
   const { toast } = useToast();
