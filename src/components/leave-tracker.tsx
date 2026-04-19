@@ -246,68 +246,77 @@ export function LeaveTracker({ employees, leaveTypes, requests }: LeaveTrackerPr
           <TabsTrigger value="usage"><BarChart3 className="h-4 w-4 mr-1.5" />Usage</TabsTrigger>
         </TabsList>
 
-        {/* ---- Balances ---- */}
-        <TabsContent value="balances" className="space-y-3 mt-4">
+        {/* ---- Balances (table) ---- */}
+        <TabsContent value="balances" className="mt-4">
           {balances.length === 0 ? (
             <Card><CardContent className="py-12 text-center text-muted-foreground">No employees</CardContent></Card>
+          ) : leaveTypes.length === 0 ? (
+            <Card><CardContent className="py-12 text-center text-muted-foreground">No leave types configured</CardContent></Card>
           ) : (
-            balances.map((row) => {
-              const e = row.employee;
-              const initials = `${e.firstName?.[0] ?? ""}${e.lastName?.[0] ?? ""}`.toUpperCase() || "?";
-              return (
-                <Card key={e.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={e.profileImageUrl ?? undefined} />
-                        <AvatarFallback>{initials}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{e.firstName} {e.lastName}</div>
-                      </div>
-                      {row.otherUsed > 0 && (
-                        <Badge variant="secondary">+{row.otherUsed}d other leave</Badge>
-                      )}
-                    </div>
-                    {leaveTypes.length === 0 ? (
-                      <div className="text-sm text-muted-foreground">
-                        No leave types configured. Add leave types to track balances.
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {leaveTypes.map((lt) => {
-                          const used = row.used[lt.id] ?? 0;
-                          const total = (lt as any).daysAllowed ?? 0;
-                          const pct = total > 0 ? Math.min(100, (used / total) * 100) : 0;
-                          const remaining = Math.max(0, total - used);
-                          const color = lt.color || "hsl(var(--primary))";
-                          return (
-                            <div key={lt.id}>
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-muted-foreground flex items-center gap-1.5">
-                                  <span
-                                    className="inline-block h-2 w-2 rounded-full"
-                                    style={{ backgroundColor: color }}
-                                  />
-                                  {lt.name}
-                                </span>
-                                <span className="font-medium">
-                                  {used}{total > 0 ? ` / ${total}` : ""} days
-                                </span>
-                              </div>
-                              <Progress value={pct} className="h-2" />
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {total > 0 ? `${remaining} remaining` : "No allowance set"}
-                              </div>
+            <Card>
+              <CardContent className="p-0 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50 text-muted-foreground">
+                    <tr>
+                      <th className="text-left font-medium px-4 py-3 sticky left-0 bg-muted/50 z-10">Employee</th>
+                      {leaveTypes.map((lt) => (
+                        <th key={lt.id} className="text-left font-medium px-4 py-3 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5">
+                            <span
+                              className="inline-block h-2 w-2 rounded-full"
+                              style={{ backgroundColor: lt.color || "hsl(var(--primary))" }}
+                            />
+                            {lt.name}
+                          </span>
+                        </th>
+                      ))}
+                      <th className="text-left font-medium px-4 py-3 whitespace-nowrap">Other</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {balances.map((row) => {
+                      const e = row.employee;
+                      const initials = `${e.firstName?.[0] ?? ""}${e.lastName?.[0] ?? ""}`.toUpperCase() || "?";
+                      return (
+                        <tr key={e.id} className="border-t border-border hover:bg-muted/30">
+                          <td className="px-4 py-3 sticky left-0 bg-background z-10">
+                            <div className="flex items-center gap-2 min-w-[180px]">
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={e.profileImageUrl ?? undefined} />
+                                <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium truncate">{e.firstName} {e.lastName}</span>
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })
+                          </td>
+                          {leaveTypes.map((lt) => {
+                            const used = row.used[lt.id] ?? 0;
+                            const total = (lt as any).daysAllowed ?? 0;
+                            const remaining = Math.max(0, total - used);
+                            return (
+                              <td key={lt.id} className="px-4 py-3 whitespace-nowrap">
+                                <div className="font-medium">
+                                  {used}{total > 0 ? ` / ${total}` : ""} <span className="text-muted-foreground font-normal">days</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {total > 0 ? `${remaining} remaining` : "—"}
+                                </div>
+                              </td>
+                            );
+                          })}
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {row.otherUsed > 0 ? (
+                              <Badge variant="secondary">{row.otherUsed}d</Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
