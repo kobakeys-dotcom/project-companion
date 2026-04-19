@@ -355,6 +355,87 @@ export type Database = {
           },
         ]
       }
+      disciplinary_records: {
+        Row: {
+          acknowledgedAt: string | null
+          actionType: Database["public"]["Enums"]["disciplinary_action_type"]
+          companyId: string
+          createdAt: string
+          documentName: string | null
+          documentUrl: string | null
+          employeeId: string
+          expiryDate: string | null
+          followUpAction: string | null
+          followUpDate: string | null
+          id: string
+          incidentDate: string
+          internalNotes: string | null
+          issuedBy: string | null
+          issuedByName: string | null
+          issuedDate: string
+          reason: string
+          status: Database["public"]["Enums"]["disciplinary_status"]
+          updatedAt: string
+        }
+        Insert: {
+          acknowledgedAt?: string | null
+          actionType: Database["public"]["Enums"]["disciplinary_action_type"]
+          companyId: string
+          createdAt?: string
+          documentName?: string | null
+          documentUrl?: string | null
+          employeeId: string
+          expiryDate?: string | null
+          followUpAction?: string | null
+          followUpDate?: string | null
+          id?: string
+          incidentDate: string
+          internalNotes?: string | null
+          issuedBy?: string | null
+          issuedByName?: string | null
+          issuedDate?: string
+          reason: string
+          status?: Database["public"]["Enums"]["disciplinary_status"]
+          updatedAt?: string
+        }
+        Update: {
+          acknowledgedAt?: string | null
+          actionType?: Database["public"]["Enums"]["disciplinary_action_type"]
+          companyId?: string
+          createdAt?: string
+          documentName?: string | null
+          documentUrl?: string | null
+          employeeId?: string
+          expiryDate?: string | null
+          followUpAction?: string | null
+          followUpDate?: string | null
+          id?: string
+          incidentDate?: string
+          internalNotes?: string | null
+          issuedBy?: string | null
+          issuedByName?: string | null
+          issuedDate?: string
+          reason?: string
+          status?: Database["public"]["Enums"]["disciplinary_status"]
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disciplinary_records_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disciplinary_records_employeeId_fkey"
+            columns: ["employeeId"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           category: string
@@ -1165,6 +1246,126 @@ export type Database = {
           },
         ]
       }
+      service_charge_pools: {
+        Row: {
+          companyId: string
+          createdAt: string
+          createdBy: string | null
+          currency: string
+          distributionMethod: Database["public"]["Enums"]["service_charge_distribution"]
+          id: string
+          notes: string | null
+          outletName: string
+          outletType: Database["public"]["Enums"]["service_charge_outlet_type"]
+          periodEnd: string
+          periodStart: string
+          totalAmount: number
+          updatedAt: string
+        }
+        Insert: {
+          companyId: string
+          createdAt?: string
+          createdBy?: string | null
+          currency?: string
+          distributionMethod?: Database["public"]["Enums"]["service_charge_distribution"]
+          id?: string
+          notes?: string | null
+          outletName: string
+          outletType?: Database["public"]["Enums"]["service_charge_outlet_type"]
+          periodEnd: string
+          periodStart: string
+          totalAmount?: number
+          updatedAt?: string
+        }
+        Update: {
+          companyId?: string
+          createdAt?: string
+          createdBy?: string | null
+          currency?: string
+          distributionMethod?: Database["public"]["Enums"]["service_charge_distribution"]
+          id?: string
+          notes?: string | null
+          outletName?: string
+          outletType?: Database["public"]["Enums"]["service_charge_outlet_type"]
+          periodEnd?: string
+          periodStart?: string
+          totalAmount?: number
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_charge_pools_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_charge_shares: {
+        Row: {
+          companyId: string
+          createdAt: string
+          employeeId: string
+          id: string
+          notes: string | null
+          paidAt: string | null
+          payoutStatus: Database["public"]["Enums"]["service_charge_payout_status"]
+          poolId: string
+          shareAmount: number
+          updatedAt: string
+          weight: number
+        }
+        Insert: {
+          companyId: string
+          createdAt?: string
+          employeeId: string
+          id?: string
+          notes?: string | null
+          paidAt?: string | null
+          payoutStatus?: Database["public"]["Enums"]["service_charge_payout_status"]
+          poolId: string
+          shareAmount?: number
+          updatedAt?: string
+          weight?: number
+        }
+        Update: {
+          companyId?: string
+          createdAt?: string
+          employeeId?: string
+          id?: string
+          notes?: string | null
+          paidAt?: string | null
+          payoutStatus?: Database["public"]["Enums"]["service_charge_payout_status"]
+          poolId?: string
+          shareAmount?: number
+          updatedAt?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_charge_shares_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_charge_shares_employeeId_fkey"
+            columns: ["employeeId"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_charge_shares_poolId_fkey"
+            columns: ["poolId"]
+            isOneToOne: false
+            referencedRelation: "service_charge_pools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       time_entries: {
         Row: {
           breakMinutes: number
@@ -1506,9 +1707,21 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "admin" | "manager" | "employee"
+      disciplinary_action_type:
+        | "verbal_warning"
+        | "warning_letter_1"
+        | "warning_letter_2"
+        | "warning_letter_3"
+        | "suspension"
+        | "termination"
+        | "resignation"
+      disciplinary_status: "active" | "expired" | "revoked" | "acknowledged"
       employment_status: "active" | "on_leave" | "terminated"
       employment_type: "full_time" | "part_time" | "contractor" | "intern"
       project_type: "project" | "branch" | "site"
+      service_charge_distribution: "equal" | "weighted"
+      service_charge_outlet_type: "restaurant" | "guest_house" | "other"
+      service_charge_payout_status: "pending" | "paid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1637,9 +1850,22 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "admin", "manager", "employee"],
+      disciplinary_action_type: [
+        "verbal_warning",
+        "warning_letter_1",
+        "warning_letter_2",
+        "warning_letter_3",
+        "suspension",
+        "termination",
+        "resignation",
+      ],
+      disciplinary_status: ["active", "expired", "revoked", "acknowledged"],
       employment_status: ["active", "on_leave", "terminated"],
       employment_type: ["full_time", "part_time", "contractor", "intern"],
       project_type: ["project", "branch", "site"],
+      service_charge_distribution: ["equal", "weighted"],
+      service_charge_outlet_type: ["restaurant", "guest_house", "other"],
+      service_charge_payout_status: ["pending", "paid"],
     },
   },
 } as const
