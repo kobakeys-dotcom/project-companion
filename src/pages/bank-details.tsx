@@ -157,7 +157,7 @@ export default function BankDetailsPage() {
                     return (
                       <tr key={emp.id} className="border-b hover:bg-muted/30">
                         <td className="py-3 px-3 font-mono text-xs" data-testid={`text-bank-emp-id-${idx}`}>
-                          {emp.id}
+                          {emp.employeeCode || "—"}
                         </td>
                         <td className="py-3 px-3 whitespace-nowrap" data-testid={`text-bank-emp-name-${idx}`}>
                           {emp.firstName} {emp.lastName}
