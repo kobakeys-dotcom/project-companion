@@ -67,9 +67,8 @@ function GeofenceFields({ form }: { form: ReturnType<typeof useForm<ProjectFormD
       return;
     }
     setLocating(true);
-    const targetAccuracyMeters = 100;
-    const acceptableAccuracyMeters = 5000;
-    const maxWaitMs = 15000;
+    const targetAccuracyMeters = 10;
+    const maxWaitMs = 25000;
     let bestPosition: GeolocationPosition | null = null;
     let finished = false;
     let watchId = 0;
@@ -86,7 +85,7 @@ function GeofenceFields({ form }: { form: ReturnType<typeof useForm<ProjectFormD
         form.setValue("latitude", position.coords.latitude.toFixed(6), { shouldDirty: true, shouldValidate: true });
         form.setValue("longitude", position.coords.longitude.toFixed(6), { shouldDirty: true, shouldValidate: true });
         toast({
-          title: "Location captured",
+          title: "Precise location captured",
           description: `±${Math.round(position.coords.accuracy)}m accuracy`,
         });
         return;
@@ -96,7 +95,7 @@ function GeofenceFields({ form }: { form: ReturnType<typeof useForm<ProjectFormD
         title: "Location too inaccurate",
         description:
           errorMessage ??
-          "We could not get a reliable GPS fix. Move outdoors or enable precise location, then try again.",
+          "A precise GPS fix within 10m is required. Move outdoors and enable precise location, then try again.",
         variant: "destructive",
       });
     };
@@ -126,19 +125,12 @@ function GeofenceFields({ form }: { form: ReturnType<typeof useForm<ProjectFormD
     );
 
     timeoutId = window.setTimeout(() => {
-      if (bestPosition) {
-        // Accept whatever fix we have, but warn if it's coarse.
-        if (bestPosition.coords.accuracy > targetAccuracyMeters) {
-          toast({
-            title: "Low accuracy location",
-            description: `Best fix was ±${Math.round(bestPosition.coords.accuracy)}m. You can drag the marker on the map to fine-tune.`,
-          });
-        }
-        finish(bestPosition);
-        return;
-      }
-
-      finish(undefined, "No GPS fix was found. Enable location services and try again.");
+      finish(
+        undefined,
+        bestPosition
+          ? `Best fix was ±${Math.round(bestPosition.coords.accuracy)}m — a 10m GPS fix is required. Move outdoors, enable precise location/GPS, and try again.`
+          : "No GPS fix was found. Move outdoors, enable precise location/GPS, and try again.",
+      );
     }, maxWaitMs);
   };
 
