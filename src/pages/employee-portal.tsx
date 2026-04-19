@@ -63,6 +63,7 @@ import {
 import { NotificationBell } from "@/components/notification-bell";
 import { SelfieCapture } from "@/components/selfie-capture";
 import { downloadPayslipPdf } from "@/lib/payslip-pdf";
+import { useCompanySettings } from "@/hooks/use-company-settings";
 
 const sb: any = supabase;
 
