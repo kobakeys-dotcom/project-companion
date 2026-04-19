@@ -66,14 +66,20 @@ export function SelfieCapture({ open, onClose, onCapture, title }: SelfieCapture
     if (!videoRef.current || !canvasRef.current) return;
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Downscale to max 480px on the longest side to keep file size small
+    const MAX_DIM = 480;
+    const srcW = video.videoWidth;
+    const srcH = video.videoHeight;
+    const scale = Math.min(1, MAX_DIM / Math.max(srcW, srcH));
+    canvas.width = Math.round(srcW * scale);
+    canvas.height = Math.round(srcH * scale);
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // Quality 0.6 — visually fine for ID verification, ~25KB per selfie
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
     setCaptured(dataUrl);
     stopCamera();
   }, [stopCamera]);
