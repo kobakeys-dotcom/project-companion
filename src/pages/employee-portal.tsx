@@ -1151,7 +1151,7 @@ export default function EmployeePortal() {
                                   lastName: employee.lastName,
                                   jobTitle: employee.jobTitle,
                                   email: employee.email,
-                                })
+                                }, settings?.companyName ?? "Company", currency)
                               }
                             >
                               <Download className="h-3 w-3 mr-1" />PDF
