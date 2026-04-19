@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompanySettings } from "@/hooks/use-company-settings";
 import { Plus, MinusCircle, Home, Utensils, Wrench, Banknote, Shirt, Package, Trash2, Download } from "lucide-react";
 import { format } from "date-fns";
 
@@ -70,7 +71,9 @@ const statusVariant = (s: Status): "default" | "secondary" | "destructive" | "ou
 export default function DeductionsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { data: settings } = useCompanySettings();
   const companyId = user?.companyId ?? null;
+  const companyCurrency = settings?.defaultCurrency || "USD";
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Deduction[]>([]);
@@ -82,7 +85,7 @@ export default function DeductionsPage() {
     employeeId: "",
     deductionType: "accommodation_damage" as DeductionType,
     amount: "",
-    currency: "USD",
+    currency: companyCurrency,
     incidentDate: format(new Date(), "yyyy-MM-dd"),
     description: "",
     applyToPayrollMonth: format(new Date(), "yyyy-MM"),
@@ -91,6 +94,11 @@ export default function DeductionsPage() {
     file: null as File | null,
   };
   const [form, setForm] = useState(initialForm);
+
+  // Keep form currency synced when settings load / change.
+  useEffect(() => {
+    setForm((f) => ({ ...f, currency: companyCurrency }));
+  }, [companyCurrency]);
 
   const loadAll = async () => {
     if (!companyId) return;
@@ -259,7 +267,7 @@ export default function DeductionsPage() {
               </div>
               <div>
                 <Label>Currency</Label>
-                <Input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} />
+                <Input value={form.currency} readOnly disabled className="bg-muted" />
               </div>
               <div>
                 <Label>Incident date</Label>
