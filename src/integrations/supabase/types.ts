@@ -1778,6 +1778,13 @@ export type Database = {
       }
     }
     Functions: {
+      archive_old_records: {
+        Args: { retention_years?: number }
+        Returns: {
+          deleted_count: number
+          table_name: string
+        }[]
+      }
       email_for_employee_code: { Args: { _code: string }; Returns: string }
       get_user_company: { Args: { _user_id: string }; Returns: string }
       has_role: {
