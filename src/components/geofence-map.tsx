@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Circle, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -45,22 +45,42 @@ function Recenter({ lat, lng }: { lat: number | null; lng: number | null }) {
 }
 
 export function GeofenceMap({ latitude, longitude, radiusMeters, onChange }: GeofenceMapProps) {
+  // If no pin is set yet, try to coarsely locate the user so the map opens
+  // near their country instead of a hardcoded city.
+  const [fallbackCenter, setFallbackCenter] = useState<[number, number] | null>(null);
+  useEffect(() => {
+    if (latitude != null && longitude != null) return;
+    if (!("geolocation" in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setFallbackCenter([pos.coords.latitude, pos.coords.longitude]),
+      () => {},
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
+    );
+  }, [latitude, longitude]);
+
   const center = useMemo<[number, number]>(() => {
     if (latitude != null && longitude != null) return [latitude, longitude];
-    return [25.2048, 55.2708]; // Dubai default
-  }, [latitude, longitude]);
+    if (fallbackCenter) return fallbackCenter;
+    return [20, 0]; // Neutral world view until we know where the user is
+  }, [latitude, longitude, fallbackCenter]);
+
+  const initialZoom =
+    latitude != null && longitude != null ? 15 : fallbackCenter ? 10 : 2;
 
   return (
     <div className="rounded-md overflow-hidden border" style={{ height: 260 }}>
       <MapContainer
+        key={`${center[0].toFixed(2)}-${center[1].toFixed(2)}-${initialZoom}`}
         center={center}
-        zoom={latitude != null && longitude != null ? 15 : 11}
+        zoom={initialZoom}
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom
       >
+        {/* CARTO Voyager tiles use English/Latin labels worldwide */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          subdomains={["a", "b", "c", "d"]}
         />
         <ClickHandler onChange={onChange} />
         <Recenter lat={latitude} lng={longitude} />
