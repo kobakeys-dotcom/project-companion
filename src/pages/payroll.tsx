@@ -839,6 +839,32 @@ export default function Payroll() {
                     <p className="text-sm text-muted-foreground">Overtime Amount: {formatCurrency(overtimeAmount, currency)}</p>
                   </div>
 
+                  {createMatchingDeductions.length > 0 && (
+                    <div className="p-3 rounded-lg border border-primary/30 bg-primary/5 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium">
+                          {createMatchingDeductions.length} approved deduction{createMatchingDeductions.length === 1 ? "" : "s"} for this employee/month
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={applyCreatePulledDeductions}
+                          data-testid="button-apply-deductions-create"
+                        >
+                          Apply {formatCurrency(createPulledTotalCents, currency)}
+                        </Button>
+                      </div>
+                      <ul className="text-xs text-muted-foreground space-y-0.5">
+                        {createMatchingDeductions.map((d) => (
+                          <li key={d.id}>
+                            • {d.deductionType.replace(/_/g, " ")} — {d.currency} {Number(d.amount).toFixed(2)} ({d.description})
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   <FormField
                     control={form.control}
                     name="deductions"
