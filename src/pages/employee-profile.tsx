@@ -378,7 +378,21 @@ export default function EmployeeProfilePage() {
         variant: "destructive",
       });
     }
-  };
+  // Days used per leave type, computed from approved time-off requests this calendar year.
+  const leaveUsedByType: Record<string, number> = (() => {
+    const out: Record<string, number> = {};
+    if (!timeOffRequests) return out;
+    const yearStart = `${new Date().getFullYear()}-01-01`;
+    for (const r of timeOffRequests) {
+      if (r.status !== "approved" || !r.leaveTypeId) continue;
+      if (r.endDate < yearStart) continue;
+      const start = new Date(r.startDate + "T00:00:00");
+      const end = new Date((r.actualReturnDate ?? r.endDate) + "T00:00:00");
+      const days = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000) + 1);
+      out[r.leaveTypeId] = (out[r.leaveTypeId] ?? 0) + days;
+    }
+    return out;
+  })();
 
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
