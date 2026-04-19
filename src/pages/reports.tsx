@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { Employee, Department, TimeOffRequest, PayrollRecord, Goal, TimeEntry } from "@shared/schema";
 import { differenceInDays, startOfMonth, endOfMonth, format, parseISO } from "date-fns";
+import { useCompanySettings, formatMoneyCents } from "@/hooks/use-company-settings";
 
 function StatCard({ 
   title, 
@@ -293,6 +294,9 @@ export default function ReportsPage() {
     queryKey: ["/api/payroll"],
   });
 
+  const { data: settings } = useCompanySettings();
+  const currency = settings?.defaultCurrency || "USD";
+
   const isLoading = empLoading || deptLoading || timeOffLoading || goalsLoading || payrollLoading;
 
   const activeEmployees = employees?.filter((e) => e.employmentStatus === "active") || [];
@@ -343,7 +347,7 @@ export default function ReportsPage() {
         />
         <StatCard
           title="Total Payroll"
-          value={`$${(totalPayroll / 100).toLocaleString()}`}
+          value={formatMoneyCents(totalPayroll, currency)}
           subtitle="This period"
           icon={DollarSign}
         />

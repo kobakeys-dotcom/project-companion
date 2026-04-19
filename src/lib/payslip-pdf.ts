@@ -20,11 +20,11 @@ export interface PayslipEmployee {
   email: string;
 }
 
-const fmtMoney = (dollars: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
+const fmtMoney = (dollars: number, currency = "USD") =>
+  new Intl.NumberFormat(undefined, { style: "currency", currency: (currency || "USD").toUpperCase() })
     .format(dollars ?? 0);
 
-export function downloadPayslipPdf(p: PayslipData, e: PayslipEmployee, companyName = "Company") {
+export function downloadPayslipPdf(p: PayslipData, e: PayslipEmployee, companyName = "Company", currency = "USD") {
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const W = doc.internal.pageSize.getWidth();
   let y = 56;
@@ -80,7 +80,7 @@ export function downloadPayslipPdf(p: PayslipData, e: PayslipEmployee, companyNa
     doc.setFont("helvetica", bold ? "bold" : "normal");
     doc.setFontSize(10);
     doc.text(label, 56, y);
-    doc.text(fmtMoney(amount), W - 56, y, { align: "right" });
+    doc.text(fmtMoney(amount, currency), W - 56, y, { align: "right" });
     y += 18;
   };
 
@@ -107,7 +107,7 @@ export function downloadPayslipPdf(p: PayslipData, e: PayslipEmployee, companyNa
   doc.setFontSize(13);
   doc.setTextColor(20);
   doc.text("Net Pay", 70, y + 6);
-  doc.text(fmtMoney(p.netPay), W - 70, y + 6, { align: "right" });
+  doc.text(fmtMoney(p.netPay, currency), W - 70, y + 6, { align: "right" });
   y += 50;
 
   // Footer
