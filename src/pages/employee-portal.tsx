@@ -841,6 +841,10 @@ export default function EmployeePortal() {
     },
     onError: (e: Error) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
   });
+
+  const acknowledge = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await sb.from("performance_reviews")
         .update({ status: "acknowledged" }).eq("id", id);
       if (error) throw new Error(error.message);
     },
