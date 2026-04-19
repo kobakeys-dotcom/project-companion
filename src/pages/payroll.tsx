@@ -614,6 +614,32 @@ export default function Payroll() {
   const grossSalary = (watchedValues.baseSalary || 0) + overtimeAmount;
   const netPay = grossSalary - (watchedValues.deductions || 0);
 
+  // Auto-pull approved deductions for the create form (employee + month)
+  const createMatchingDeductions = useMemo(() => {
+    const key = payrollMonthKey(watchedValues.month, watchedValues.payPeriodStart);
+    if (!key || !watchedValues.employeeId) return [] as DeductionRow[];
+    return deductionsByKey.get(`${watchedValues.employeeId}::${key}`) ?? [];
+  }, [deductionsByKey, watchedValues.employeeId, watchedValues.month, watchedValues.payPeriodStart]);
+  const createPulledTotalCents = sumDeductionCents(createMatchingDeductions);
+
+  // Auto-prefill deductions when the matching set changes (only if user hasn't typed something different)
+  useEffect(() => {
+    if (!isCreateDialogOpen) return;
+    if (createMatchingDeductions.length === 0) return;
+    const currentDeductions = form.getValues("deductions") || 0;
+    const currentNotes = form.getValues("deductionNotes") || "";
+    if (currentDeductions === 0 && currentNotes === "") {
+      form.setValue("deductions", createPulledTotalCents, { shouldDirty: false });
+      form.setValue("deductionNotes", formatDeductionNote(createMatchingDeductions), { shouldDirty: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createMatchingDeductions, isCreateDialogOpen]);
+
+  const applyCreatePulledDeductions = () => {
+    form.setValue("deductions", createPulledTotalCents, { shouldDirty: true });
+    form.setValue("deductionNotes", formatDeductionNote(createMatchingDeductions), { shouldDirty: true });
+  };
+
   // Filter records by month
   const filteredRecords = payrollRecords?.filter(record => 
     filterMonth === "all" || record.month === filterMonth
