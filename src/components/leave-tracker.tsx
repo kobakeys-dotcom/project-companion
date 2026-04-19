@@ -383,34 +383,6 @@ export function LeaveTracker({ employees, leaveTypes, requests }: LeaveTrackerPr
         <TabsContent value="usage" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Approved days by leave type — {year}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {usage.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground">No approved leaves in {year}</div>
-              ) : (
-                <div className="space-y-3">
-                  {usage.map((u) => (
-                    <div key={u.id}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="font-medium">{u.name}</span>
-                        <span className="text-muted-foreground">{u.days} days</span>
-                      </div>
-                      <div className="h-3 rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{ width: `${(u.days / usageMax) * 100}%`, backgroundColor: u.color }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
               <CardTitle className="text-base">Approved days by employee — {year}</CardTitle>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
