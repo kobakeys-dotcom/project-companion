@@ -36,6 +36,10 @@ import {
   LogIn,
   FileText,
   Download,
+  UtensilsCrossed,
+  ShieldAlert,
+  MinusCircle,
+  FileWarning,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -106,6 +110,22 @@ interface ReviewRow {
   teamworkRating: number | null; communicationRating: number | null;
   strengths: string | null; improvements: string | null;
   goals: string | null; comments: string | null; status: string;
+}
+interface ServiceChargeShareRow {
+  id: string; poolId: string; shareAmount: number; weight: number;
+  payoutStatus: string; paidAt: string | null; notes: string | null;
+  pool?: { outletName: string; outletType: string; periodStart: string; periodEnd: string; currency: string } | null;
+}
+interface DisciplinaryRow {
+  id: string; actionType: string; incidentDate: string; issuedDate: string;
+  reason: string; status: string; documentUrl: string | null; documentName: string | null;
+  acknowledgedAt: string | null; expiryDate: string | null;
+  followUpAction: string | null; followUpDate: string | null; issuedByName: string | null;
+}
+interface DeductionRow {
+  id: string; deductionType: string; amount: number; currency: string;
+  incidentDate: string; description: string; status: string;
+  applyToPayrollMonth: string | null; evidenceUrl: string | null; evidenceName: string | null;
 }
 interface DocumentRow {
   id: string; name: string; type: string; category: string;
@@ -777,6 +797,51 @@ export default function EmployeePortal() {
     },
   });
 
+  const { data: serviceCharges = [] } = useQuery<ServiceChargeShareRow[]>({
+    queryKey: ["portal:service-charges", empId], enabled: !!empId,
+    queryFn: async () => {
+      const { data, error } = await sb.from("service_charge_shares")
+        .select("*, pool:poolId(outletName, outletType, periodStart, periodEnd, currency)")
+        .eq("employeeId", empId)
+        .order("createdAt", { ascending: false });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as ServiceChargeShareRow[];
+    },
+  });
+
+  const { data: disciplinary = [] } = useQuery<DisciplinaryRow[]>({
+    queryKey: ["portal:disciplinary", empId], enabled: !!empId,
+    queryFn: async () => {
+      const { data, error } = await sb.from("disciplinary_records").select("*")
+        .eq("employeeId", empId).order("incidentDate", { ascending: false });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as DisciplinaryRow[];
+    },
+  });
+
+  const { data: deductions = [] } = useQuery<DeductionRow[]>({
+    queryKey: ["portal:deductions", empId], enabled: !!empId,
+    queryFn: async () => {
+      const { data, error } = await sb.from("deductions").select("*")
+        .eq("employeeId", empId).order("incidentDate", { ascending: false });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as DeductionRow[];
+    },
+  });
+
+  const acknowledgeDisciplinary = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await sb.from("disciplinary_records")
+        .update({ status: "acknowledged", acknowledgedAt: new Date().toISOString() }).eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast({ title: "Acknowledged" });
+      qc.invalidateQueries({ queryKey: ["portal:disciplinary"] });
+    },
+    onError: (e: Error) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
+  });
+
   const acknowledge = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await sb.from("performance_reviews")
@@ -897,7 +962,7 @@ export default function EmployeePortal() {
 
         {/* Tabs */}
         <Tabs defaultValue="time-clock" className="space-y-4">
-          <TabsList className="grid grid-cols-7 w-full max-w-3xl">
+          <TabsList className="grid grid-cols-5 lg:grid-cols-10 w-full">
             <TabsTrigger value="time-clock">Clock</TabsTrigger>
             <TabsTrigger value="time-off">Time Off</TabsTrigger>
             <TabsTrigger value="expenses">Expenses</TabsTrigger>
@@ -905,6 +970,9 @@ export default function EmployeePortal() {
             <TabsTrigger value="benefits">Benefits</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
             <TabsTrigger value="documents">Docs</TabsTrigger>
+            <TabsTrigger value="service-charges">Tips</TabsTrigger>
+            <TabsTrigger value="disciplinary">Discipline</TabsTrigger>
+            <TabsTrigger value="deductions">Deductions</TabsTrigger>
           </TabsList>
 
           {/* ----- TIME CLOCK ----- */}
@@ -1193,6 +1261,167 @@ export default function EmployeePortal() {
                             }}
                           >
                             <Download className="h-3 w-3 mr-1" />Open
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ----- SERVICE CHARGES ----- */}
+          <TabsContent value="service-charges">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><UtensilsCrossed className="h-4 w-4" />My Service Charges</CardTitle>
+                <CardDescription>Tips and service charge shares from outlets.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {serviceCharges.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-8 text-center">No service charge shares yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {serviceCharges.map((s) => (
+                      <div key={s.id} className="p-3 rounded-lg border flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{s.pool?.outletName ?? "Pool"}</p>
+                          <p className="text-xs text-muted-foreground capitalize">
+                            {s.pool?.outletType?.replace("_", " ")}
+                            {s.pool && ` · ${format(parseISO(s.pool.periodStart), "MMM d")} – ${format(parseISO(s.pool.periodEnd), "MMM d, yyyy")}`}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold">{fmtMoney(s.shareAmount)}</span>
+                          <StatusBadge status={s.payoutStatus} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ----- DISCIPLINARY ----- */}
+          <TabsContent value="disciplinary">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><ShieldAlert className="h-4 w-4" />My Disciplinary Records</CardTitle>
+                <CardDescription>Warnings, suspensions and related actions. Acknowledge to confirm receipt.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {disciplinary.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-8 text-center">No records.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {disciplinary.map((d) => (
+                      <div key={d.id} className="p-4 rounded-lg border space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-semibold capitalize flex items-center gap-2">
+                              <FileWarning className="h-4 w-4" />
+                              {d.actionType.replace(/_/g, " ")}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Incident {format(parseISO(d.incidentDate), "MMM d, yyyy")} · Issued {format(parseISO(d.issuedDate), "MMM d, yyyy")}
+                              {d.issuedByName ? ` · by ${d.issuedByName}` : ""}
+                            </p>
+                          </div>
+                          <StatusBadge status={d.status} />
+                        </div>
+                        <p className="text-sm">{d.reason}</p>
+                        {d.followUpAction && (
+                          <p className="text-xs text-muted-foreground">Follow-up: {d.followUpAction}{d.followUpDate ? ` · ${format(parseISO(d.followUpDate), "MMM d, yyyy")}` : ""}</p>
+                        )}
+                        <div className="flex items-center gap-2 pt-1">
+                          {d.documentUrl && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async () => {
+                                const { data, error } = await sb.storage
+                                  .from("disciplinary-docs")
+                                  .createSignedUrl(d.documentUrl!, 60);
+                                if (error || !data?.signedUrl) {
+                                  toast({ title: "Could not open document", description: error?.message, variant: "destructive" });
+                                  return;
+                                }
+                                window.open(data.signedUrl, "_blank", "noopener");
+                              }}
+                            >
+                              <Download className="h-3 w-3 mr-1" />{d.documentName ?? "Document"}
+                            </Button>
+                          )}
+                          {d.status === "active" && !d.acknowledgedAt && (
+                            <Button
+                              size="sm"
+                              disabled={acknowledgeDisciplinary.isPending}
+                              onClick={() => acknowledgeDisciplinary.mutate(d.id)}
+                            >
+                              <CheckCircle2 className="h-4 w-4 mr-1" />Acknowledge
+                            </Button>
+                          )}
+                          {d.acknowledgedAt && (
+                            <span className="text-xs text-muted-foreground">
+                              Acknowledged {format(new Date(d.acknowledgedAt), "MMM d, yyyy")}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ----- DEDUCTIONS ----- */}
+          <TabsContent value="deductions">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><MinusCircle className="h-4 w-4" />My Deductions</CardTitle>
+                <CardDescription>Deductions for incidents like accommodation damage, wrong orders, equipment loss.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {deductions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-8 text-center">No deductions.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {deductions.map((d) => (
+                      <div key={d.id} className="p-3 rounded-lg border">
+                        <div className="flex items-start justify-between gap-3 mb-1">
+                          <div className="min-w-0">
+                            <p className="font-medium capitalize">{d.deductionType.replace(/_/g, " ")}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {format(parseISO(d.incidentDate), "MMM d, yyyy")}
+                              {d.applyToPayrollMonth ? ` · Applied to ${d.applyToPayrollMonth}` : ""}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="font-semibold text-destructive">−{fmtMoney(d.amount)}</span>
+                            <StatusBadge status={d.status} />
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{d.description}</p>
+                        {d.evidenceUrl && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-2"
+                            onClick={async () => {
+                              const { data, error } = await sb.storage
+                                .from("deduction-evidence")
+                                .createSignedUrl(d.evidenceUrl!, 60);
+                              if (error || !data?.signedUrl) {
+                                toast({ title: "Could not open evidence", description: error?.message, variant: "destructive" });
+                                return;
+                              }
+                              window.open(data.signedUrl, "_blank", "noopener");
+                            }}
+                          >
+                            <Download className="h-3 w-3 mr-1" />{d.evidenceName ?? "Evidence"}
                           </Button>
                         )}
                       </div>
