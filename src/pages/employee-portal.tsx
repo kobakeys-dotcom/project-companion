@@ -746,6 +746,9 @@ export default function EmployeePortal() {
   const empId = employee?.id;
   const companyId = employee?.companyId;
 
+  const { data: settings } = useCompanySettings();
+  const currency = settings?.defaultCurrency || "USD";
+
   const { data: leaveTypes = [] } = useQuery<LeaveType[]>({
     queryKey: ["portal:leave-types", companyId], enabled: !!companyId,
     queryFn: async () => {
