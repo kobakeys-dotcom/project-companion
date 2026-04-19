@@ -25,7 +25,7 @@ type ActionType =
   | "resignation";
 type Status = "active" | "expired" | "revoked" | "acknowledged";
 
-interface Record {
+interface DiscRecord {
   id: string;
   companyId: string;
   employeeId: string;
@@ -90,7 +90,7 @@ export default function DisciplinaryPage() {
   const companyId = user?.companyId ?? null;
 
   const [loading, setLoading] = useState(true);
-  const [records, setRecords] = useState<Record[]>([]);
+  const [records, setRecords] = useState<DiscRecord[]>([]);
   const [employees, setEmployees] = useState<EmployeeLite[]>([]);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | ActionType>("all");
