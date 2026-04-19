@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { Employee, Department, TimeOffRequest, PayrollRecord, Goal, TimeEntry } from "@shared/schema";
 import { differenceInDays, startOfMonth, endOfMonth, format, parseISO } from "date-fns";
+import { useCompanySettings, formatMoneyCents } from "@/hooks/use-company-settings";
 
 function StatCard({ 
   title, 
@@ -292,6 +293,9 @@ export default function ReportsPage() {
   const { data: payroll, isLoading: payrollLoading } = useQuery<PayrollRecord[]>({
     queryKey: ["/api/payroll"],
   });
+
+  const { data: settings } = useCompanySettings();
+  const currency = settings?.defaultCurrency || "USD";
 
   const isLoading = empLoading || deptLoading || timeOffLoading || goalsLoading || payrollLoading;
 
