@@ -253,10 +253,6 @@ export function LeaveTracker({ employees, leaveTypes, requests }: LeaveTrackerPr
           ) : (
             balances.map((row) => {
               const e = row.employee;
-              const vacTotal = e.vacationDaysTotal ?? 20;
-              const sickTotal = e.sickDaysTotal ?? 10;
-              const vacPct = Math.min(100, (row.vacationUsed / Math.max(1, vacTotal)) * 100);
-              const sickPct = Math.min(100, (row.sickUsed / Math.max(1, sickTotal)) * 100);
               const initials = `${e.firstName?.[0] ?? ""}${e.lastName?.[0] ?? ""}`.toUpperCase() || "?";
               return (
                 <Card key={e.id}>
@@ -273,28 +269,41 @@ export function LeaveTracker({ employees, leaveTypes, requests }: LeaveTrackerPr
                         <Badge variant="secondary">+{row.otherUsed}d other leave</Badge>
                       )}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-muted-foreground">Vacation</span>
-                          <span className="font-medium">{row.vacationUsed} / {vacTotal} days</span>
-                        </div>
-                        <Progress value={vacPct} className="h-2" />
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {Math.max(0, vacTotal - row.vacationUsed)} remaining
-                        </div>
+                    {leaveTypes.length === 0 ? (
+                      <div className="text-sm text-muted-foreground">
+                        No leave types configured. Add leave types to track balances.
                       </div>
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-muted-foreground">Sick</span>
-                          <span className="font-medium">{row.sickUsed} / {sickTotal} days</span>
-                        </div>
-                        <Progress value={sickPct} className="h-2" />
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {Math.max(0, sickTotal - row.sickUsed)} remaining
-                        </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {leaveTypes.map((lt) => {
+                          const used = row.used[lt.id] ?? 0;
+                          const total = (lt as any).daysAllowed ?? 0;
+                          const pct = total > 0 ? Math.min(100, (used / total) * 100) : 0;
+                          const remaining = Math.max(0, total - used);
+                          const color = lt.color || "hsl(var(--primary))";
+                          return (
+                            <div key={lt.id}>
+                              <div className="flex justify-between text-sm mb-1">
+                                <span className="text-muted-foreground flex items-center gap-1.5">
+                                  <span
+                                    className="inline-block h-2 w-2 rounded-full"
+                                    style={{ backgroundColor: color }}
+                                  />
+                                  {lt.name}
+                                </span>
+                                <span className="font-medium">
+                                  {used}{total > 0 ? ` / ${total}` : ""} days
+                                </span>
+                              </div>
+                              <Progress value={pct} className="h-2" />
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {total > 0 ? `${remaining} remaining` : "No allowance set"}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               );
