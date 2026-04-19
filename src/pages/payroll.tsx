@@ -176,11 +176,13 @@ type PayrollRecordWithEmployee = any;
 function EditPayrollDialog({ 
   record, 
   onClose, 
-  currency 
+  currency,
+  deductionsByKey,
 }: { 
   record: PayrollRecordWithEmployee; 
   onClose: () => void;
   currency: string;
+  deductionsByKey: Map<string, DeductionRow[]>;
 }) {
   const { toast } = useToast();
 
@@ -197,6 +199,22 @@ function EditPayrollDialog({
       deductionNotes: record.deductionNotes || "",
     },
   });
+
+  const watchedValues = form.watch();
+
+  // Auto-pull approved deductions for the matching employee + month
+  const matchingDeductions = useMemo(() => {
+    const key = payrollMonthKey(watchedValues.month, watchedValues.payPeriodStart);
+    if (!key || !record.employeeId) return [] as DeductionRow[];
+    return deductionsByKey.get(`${record.employeeId}::${key}`) ?? [];
+  }, [deductionsByKey, record.employeeId, watchedValues.month, watchedValues.payPeriodStart]);
+
+  const pulledTotalCents = sumDeductionCents(matchingDeductions);
+
+  const applyPulledDeductions = () => {
+    form.setValue("deductions", pulledTotalCents, { shouldDirty: true });
+    form.setValue("deductionNotes", formatDeductionNote(matchingDeductions), { shouldDirty: true });
+  };
 
   const updatePayroll = useMutation({
     mutationFn: async (data: EditPayrollFormData) => {
@@ -224,10 +242,10 @@ function EditPayrollDialog({
     updatePayroll.mutate(data);
   };
 
-  const watchedValues = form.watch();
   const overtimeAmount = Math.round((watchedValues.overtimeHours || 0) * (watchedValues.overtimeRate || 0));
   const grossSalary = (watchedValues.baseSalary || 0) + overtimeAmount;
   const netPay = grossSalary - (watchedValues.deductions || 0);
+
 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
