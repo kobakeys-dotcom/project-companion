@@ -234,7 +234,7 @@ export default function DocumentsStatusPage() {
             <div className="flex flex-wrap gap-2">
               {alertEmployees.map((emp) => (
                 <Badge key={emp.id} variant="outline" className="bg-background">
-                  {emp.firstName} {emp.lastName} ({emp.id})
+                  {emp.firstName} {emp.lastName} ({emp.employeeCode || "—"})
                 </Badge>
               ))}
             </div>
@@ -314,7 +314,7 @@ export default function DocumentsStatusPage() {
                   filteredRows.map((row, idx) => (
                     <tr key={row.employee.id} className={`border-b hover:bg-muted/30 ${row.hasAlert ? 'bg-amber-50/50 dark:bg-amber-950/10' : ''}`}>
                       <td className="py-3 px-3 font-mono text-xs" data-testid={`text-employee-id-${idx}`}>
-                        {row.employee.id}
+                        {row.employee.employeeCode || "—"}
                       </td>
                       <td className="py-3 px-3 whitespace-nowrap" data-testid={`text-employee-name-${idx}`}>
                         <div className="flex items-center gap-2">
