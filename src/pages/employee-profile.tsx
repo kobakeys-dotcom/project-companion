@@ -1138,6 +1138,7 @@ export default function EmployeeProfilePage() {
             <CompensationHistory
               employeeId={employee.id}
               companyId={employee.companyId}
+              currency={currency}
             />
           )}
         </TabsContent>
