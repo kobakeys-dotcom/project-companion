@@ -111,6 +111,22 @@ interface ReviewRow {
   strengths: string | null; improvements: string | null;
   goals: string | null; comments: string | null; status: string;
 }
+interface ServiceChargeShareRow {
+  id: string; poolId: string; shareAmount: number; weight: number;
+  payoutStatus: string; paidAt: string | null; notes: string | null;
+  pool?: { outletName: string; outletType: string; periodStart: string; periodEnd: string; currency: string } | null;
+}
+interface DisciplinaryRow {
+  id: string; actionType: string; incidentDate: string; issuedDate: string;
+  reason: string; status: string; documentUrl: string | null; documentName: string | null;
+  acknowledgedAt: string | null; expiryDate: string | null;
+  followUpAction: string | null; followUpDate: string | null; issuedByName: string | null;
+}
+interface DeductionRow {
+  id: string; deductionType: string; amount: number; currency: string;
+  incidentDate: string; description: string; status: string;
+  applyToPayrollMonth: string | null; evidenceUrl: string | null; evidenceName: string | null;
+}
 interface DocumentRow {
   id: string; name: string; type: string; category: string;
   fileUrl: string | null; fileSize: number | null; isCompanyWide: boolean;
