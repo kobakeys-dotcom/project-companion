@@ -309,6 +309,61 @@ function LeaveRequestCard({
   const effectiveEndDate = request.actualReturnDate || request.endDate;
   const days = differenceInDays(parseISO(effectiveEndDate), parseISO(request.startDate)) + 1;
 
+  // CRUD / return-date dialogs (only meaningful for processed requests)
+  const isProcessed = request.status === "approved" || request.status === "rejected";
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [returnOpen, setReturnOpen] = useState(false);
+  const [editStart, setEditStart] = useState(request.startDate);
+  const [editEnd, setEditEnd] = useState(request.endDate);
+  const [editReason, setEditReason] = useState(request.reason ?? "");
+  const [editStatus, setEditStatus] = useState<string>(request.status);
+  const [editReturn, setEditReturn] = useState(request.actualReturnDate ?? "");
+
+  const updateRequestMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      return await apiRequest("PATCH", `/api/time-off/${request.id}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/time-off"] });
+      toast({ title: "Leave request updated" });
+      setEditOpen(false);
+      onRefresh();
+    },
+    onError: (e: any) =>
+      toast({ title: "Update failed", description: e?.message, variant: "destructive" }),
+  });
+
+  const deleteRequestMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("DELETE", `/api/time-off/${request.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/time-off"] });
+      toast({ title: "Leave request deleted" });
+      setDeleteOpen(false);
+      onRefresh();
+    },
+    onError: (e: any) =>
+      toast({ title: "Delete failed", description: e?.message, variant: "destructive" }),
+  });
+
+  const setReturnDateMutation = useMutation({
+    mutationFn: async (date: string | null) => {
+      return await apiRequest("PATCH", `/api/time-off/${request.id}/return-date`, {
+        actualReturnDate: date,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/time-off"] });
+      toast({ title: "Return date updated" });
+      setReturnOpen(false);
+      onRefresh();
+    },
+    onError: (e: any) =>
+      toast({ title: "Failed to update return date", description: e?.message, variant: "destructive" }),
+  });
+
   const baseUrl = window.location.origin;
   const [tokens, setTokens] = useState<{ dept_token?: string; mgmt_token?: string } | null>(null);
   const deptApprovalLink = tokens?.dept_token
