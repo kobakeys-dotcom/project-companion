@@ -132,8 +132,8 @@ interface DocumentRow {
   fileUrl: string | null; fileSize: number | null; isCompanyWide: boolean;
   employeeId: string | null; createdAt: string;
 }
-const fmtMoney = (dollars: number | null | undefined) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
+const fmtMoney = (dollars: number | null | undefined, currency = "USD") =>
+  new Intl.NumberFormat(undefined, { style: "currency", currency: (currency || "USD").toUpperCase() })
     .format((dollars ?? 0) as number);
 
 function StatusBadge({ status }: { status: string }) {
