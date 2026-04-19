@@ -55,6 +55,8 @@ import ShiftsPage from "@/pages/shifts";
 import BiometricDevicesPage from "@/pages/biometric-devices";
 import AttendanceSelfiesPage from "@/pages/attendance-selfies";
 import AppraisalPage from "@/pages/appraisal";
+import ServiceChargesPage from "@/pages/service-charges";
+import DisciplinaryPage from "@/pages/disciplinary";
 import NotFound from "@/pages/not-found";
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
@@ -155,6 +157,8 @@ const App = () => (
             <Route path="/shifts" element={<ProtectedShell><ShiftsPage /></ProtectedShell>} />
             <Route path="/biometric-devices" element={<ProtectedShell><BiometricDevicesPage /></ProtectedShell>} />
             <Route path="/attendance-selfies" element={<ProtectedShell><AttendanceSelfiesPage /></ProtectedShell>} />
+            <Route path="/service-charges" element={<ProtectedShell><ServiceChargesPage /></ProtectedShell>} />
+            <Route path="/disciplinary" element={<ProtectedShell><DisciplinaryPage /></ProtectedShell>} />
             <Route path="/pricing" element={<ProtectedShell><PricingPage /></ProtectedShell>} />
             <Route path="/subscription/success" element={<ProtectedShell><SubscriptionSuccessPage /></ProtectedShell>} />
             <Route path="/subscription/cancel" element={<ProtectedShell><SubscriptionCancelPage /></ProtectedShell>} />
