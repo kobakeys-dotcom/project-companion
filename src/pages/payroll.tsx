@@ -104,7 +104,74 @@ function formatCurrency(cents: number, currencyCode: string = "USD"): string {
   }
 }
 
+const MONTH_INDEX: Record<string, number> = MONTHS.reduce(
+  (acc, m, i) => ({ ...acc, [m]: i }),
+  {} as Record<string, number>,
+);
+
+/** Resolve the YYYY-MM key used by deductions.applyToPayrollMonth from a payroll record. */
+function payrollMonthKey(monthName?: string | null, periodStart?: string | null): string | null {
+  if (!monthName || !(monthName in MONTH_INDEX)) return null;
+  const mm = String(MONTH_INDEX[monthName] + 1).padStart(2, "0");
+  let year: number | null = null;
+  if (periodStart) {
+    const y = Number(periodStart.slice(0, 4));
+    if (Number.isFinite(y)) year = y;
+  }
+  if (!year) year = new Date().getFullYear();
+  return `${year}-${mm}`;
+}
+
+interface DeductionRow {
+  id: string;
+  employeeId: string;
+  amount: number; // numeric in DB (whole units)
+  currency: string;
+  description: string;
+  deductionType: string;
+  status: string;
+  applyToPayrollMonth: string | null;
+}
+
+/** Load approved/deducted deductions for the company and group them by employee + YYYY-MM. */
+function useApprovedDeductions() {
+  return useQuery({
+    queryKey: ["deductions", "approved-for-payroll"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("deductions")
+        .select("id, employeeId, amount, currency, description, deductionType, status, applyToPayrollMonth")
+        .in("status", ["approved", "deducted"]);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as DeductionRow[];
+    },
+  });
+}
+
+function groupDeductions(rows: DeductionRow[] | undefined) {
+  const map = new Map<string, DeductionRow[]>();
+  (rows ?? []).forEach((d) => {
+    if (!d.applyToPayrollMonth) return;
+    const key = `${d.employeeId}::${d.applyToPayrollMonth}`;
+    const list = map.get(key) ?? [];
+    list.push(d);
+    map.set(key, list);
+  });
+  return map;
+}
+
+function formatDeductionNote(rows: DeductionRow[]): string {
+  return rows
+    .map((d) => `${d.deductionType.replace(/_/g, " ")}: ${d.currency} ${Number(d.amount).toFixed(2)} — ${d.description}`)
+    .join("\n");
+}
+
+function sumDeductionCents(rows: DeductionRow[]): number {
+  return rows.reduce((sum, d) => sum + Math.round(Number(d.amount) * 100), 0);
+}
+
 type PayrollRecordWithEmployee = any;
+
 
 function EditPayrollDialog({ 
   record, 
