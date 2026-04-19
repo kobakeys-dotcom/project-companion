@@ -380,7 +380,7 @@ function EditPayrollDialog({
           </div>
 
           {matchingDeductions.length > 0 && (
-            <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 space-y-2">
+            <div className="p-3 rounded-lg border border-primary/30 bg-primary/5 space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-medium">
                   {matchingDeductions.length} approved deduction{matchingDeductions.length === 1 ? "" : "s"} for this month
