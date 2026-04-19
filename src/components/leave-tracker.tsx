@@ -380,7 +380,7 @@ export function LeaveTracker({ employees, leaveTypes, requests }: LeaveTrackerPr
         </TabsContent>
 
         {/* ---- Usage ---- */}
-        <TabsContent value="usage" className="mt-4">
+        <TabsContent value="usage" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Approved days by leave type — {year}</CardTitle>
@@ -405,6 +405,71 @@ export function LeaveTracker({ employees, leaveTypes, requests }: LeaveTrackerPr
                     </div>
                   ))}
                 </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Approved days by employee — {year}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 overflow-x-auto">
+              {balances.length === 0 || leaveTypes.length === 0 ? (
+                <div className="py-12 text-center text-muted-foreground">No data</div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50 text-muted-foreground">
+                    <tr>
+                      <th className="text-left font-medium px-4 py-3 sticky left-0 bg-muted/50 z-10">Employee</th>
+                      {leaveTypes.map((lt) => (
+                        <th key={lt.id} className="text-right font-medium px-4 py-3 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5">
+                            <span
+                              className="inline-block h-2 w-2 rounded-full"
+                              style={{ backgroundColor: lt.color || "hsl(var(--primary))" }}
+                            />
+                            {lt.name}
+                          </span>
+                        </th>
+                      ))}
+                      <th className="text-right font-medium px-4 py-3 whitespace-nowrap">Other</th>
+                      <th className="text-right font-medium px-4 py-3 whitespace-nowrap">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {balances.map((row) => {
+                      const e = row.employee;
+                      const initials = `${e.firstName?.[0] ?? ""}${e.lastName?.[0] ?? ""}`.toUpperCase() || "?";
+                      const total =
+                        leaveTypes.reduce((s, lt) => s + (row.used[lt.id] ?? 0), 0) + row.otherUsed;
+                      return (
+                        <tr key={e.id} className="border-t border-border hover:bg-muted/30">
+                          <td className="px-4 py-3 sticky left-0 bg-background z-10">
+                            <div className="flex items-center gap-2 min-w-[180px]">
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={e.profileImageUrl ?? undefined} />
+                                <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium truncate">{e.firstName} {e.lastName}</span>
+                            </div>
+                          </td>
+                          {leaveTypes.map((lt) => {
+                            const used = row.used[lt.id] ?? 0;
+                            return (
+                              <td key={lt.id} className="px-4 py-3 text-right whitespace-nowrap">
+                                {used > 0 ? <span className="font-medium">{used}</span> : <span className="text-muted-foreground">—</span>}
+                              </td>
+                            );
+                          })}
+                          <td className="px-4 py-3 text-right whitespace-nowrap">
+                            {row.otherUsed > 0 ? row.otherUsed : <span className="text-muted-foreground">—</span>}
+                          </td>
+                          <td className="px-4 py-3 text-right whitespace-nowrap font-semibold">{total}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               )}
             </CardContent>
           </Card>
