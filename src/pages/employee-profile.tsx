@@ -378,6 +378,8 @@ export default function EmployeeProfilePage() {
         variant: "destructive",
       });
     }
+  };
+
   // Days used per leave type, computed from approved time-off requests this calendar year.
   const leaveUsedByType: Record<string, number> = (() => {
     const out: Record<string, number> = {};
@@ -520,47 +522,53 @@ export default function EmployeeProfilePage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  Vacation Days
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Used</span>
-                  <span className="font-medium">
-                    {employee.vacationDaysUsed || 0} / {employee.vacationDaysTotal || 0} days
-                  </span>
-                </div>
-                <Progress value={vacationProgress} className="h-2" />
-                <p className="text-xs text-muted-foreground">
-                  {(employee.vacationDaysTotal || 0) - (employee.vacationDaysUsed || 0)} days remaining
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  Sick Days
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Used</span>
-                  <span className="font-medium">
-                    {employee.sickDaysUsed || 0} / {employee.sickDaysTotal || 0} days
-                  </span>
-                </div>
-                <Progress value={sickProgress} className="h-2" />
-                <p className="text-xs text-muted-foreground">
-                  {(employee.sickDaysTotal || 0) - (employee.sickDaysUsed || 0)} days remaining
-                </p>
-              </CardContent>
-            </Card>
+            {leaveTypes.length === 0 ? (
+              <Card className="md:col-span-2">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    Leave Balances
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    No leave types configured for this company yet.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              leaveTypes.map((lt) => {
+                const used = leaveUsedByType[lt.id] ?? 0;
+                const total = lt.daysAllowed ?? 0;
+                const remaining = Math.max(0, total - used);
+                const progress = total > 0 ? Math.min(100, (used / total) * 100) : 0;
+                return (
+                  <Card key={lt.id}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <span
+                          className="inline-block h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: lt.color || "hsl(var(--primary))" }}
+                        />
+                        {lt.name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-muted-foreground">Used</span>
+                        <span className="font-medium">
+                          {used} / {total} days
+                        </span>
+                      </div>
+                      <Progress value={progress} className="h-2" />
+                      <p className="text-xs text-muted-foreground">
+                        {total > 0 ? `${remaining} days remaining` : "No allowance set"}
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
           </div>
 
           {/* Salary Package Section */}
