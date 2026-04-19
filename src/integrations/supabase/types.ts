@@ -266,6 +266,65 @@ export type Database = {
         }
         Relationships: []
       }
+      company_settings: {
+        Row: {
+          address: string | null
+          city: string | null
+          companyId: string
+          companyName: string | null
+          country: string | null
+          createdAt: string
+          defaultCurrency: string
+          fiscalYearStart: string
+          id: string
+          industry: string | null
+          timezone: string
+          updatedAt: string
+          website: string | null
+          workWeekDays: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          companyId: string
+          companyName?: string | null
+          country?: string | null
+          createdAt?: string
+          defaultCurrency?: string
+          fiscalYearStart?: string
+          id?: string
+          industry?: string | null
+          timezone?: string
+          updatedAt?: string
+          website?: string | null
+          workWeekDays?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          companyId?: string
+          companyName?: string | null
+          country?: string | null
+          createdAt?: string
+          defaultCurrency?: string
+          fiscalYearStart?: string
+          id?: string
+          industry?: string | null
+          timezone?: string
+          updatedAt?: string
+          website?: string | null
+          workWeekDays?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_settings_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compensation_history: {
         Row: {
           approvedBy: string | null
