@@ -1188,6 +1188,7 @@ export default function Payroll() {
           <EditPayrollDialog
             record={editingRecord}
             currency={currency}
+            deductionsByKey={deductionsByKey}
             onClose={() => setEditingRecord(null)}
           />
         </Dialog>
