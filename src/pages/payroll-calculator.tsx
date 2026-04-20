@@ -145,15 +145,15 @@ export default function PayrollCalculatorPage() {
   ) => {
     const m = map ?? {};
     const matchedIds = Object.keys(m);
-    let touched = 0;
+    const employeeIds = new Set((employees ?? []).map((e) => e.id));
+    const applicableIds = matchedIds.filter((id) => employeeIds.has(id));
     setRows((prev) => {
       const next = { ...prev };
-      for (const id of matchedIds) {
+      for (const id of applicableIds) {
         const d = m[id];
         const r = next[id];
         if (!r) continue;
         next[id] = { ...r, deductions: d.total, notes: d.notes };
-        touched++;
       }
       return next;
     });
@@ -163,15 +163,15 @@ export default function PayrollCalculatorPage() {
         title: "No deductions found",
         description: `No approved/deducted entries marked for ${payrollMonthKey}. Set "Apply to payroll month" on the Deductions page.`,
       });
-    } else if (touched === 0) {
+    } else if (applicableIds.length === 0) {
       toast({
-        title: "Employee not in this payroll",
-        description: `Found ${matchedIds.length} deduction${matchedIds.length === 1 ? "" : "s"} for ${payrollMonthKey}, but the employee is not loaded in the calculator yet. Try again in a moment.`,
+        title: "Deductions skipped",
+        description: `Found ${matchedIds.length} deduction${matchedIds.length === 1 ? "" : "s"} for ${payrollMonthKey}, but those employees aren't in this payroll (inactive or different company).`,
       });
     } else {
       toast({
         title: "Deductions pulled",
-        description: `Applied to ${touched} employee${touched === 1 ? "" : "s"} for ${payrollMonthKey}.`,
+        description: `Applied to ${applicableIds.length} employee${applicableIds.length === 1 ? "" : "s"} for ${payrollMonthKey}.`,
       });
     }
   };
