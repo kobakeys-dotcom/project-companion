@@ -211,38 +211,51 @@ export default function PayrollCalculatorPage() {
     },
   });
 
-  const applyServiceCharges = (map: Record<string, { total: number; notes: string }> | undefined) => {
-    if (!employees) return;
+  const applyServiceCharges = (
+    map: Record<string, { total: number; notes: string }> | undefined,
+    opts: { silent?: boolean } = {},
+  ) => {
     const m = map ?? {};
+    const matchedIds = Object.keys(m);
     let touched = 0;
     setRows((prev) => {
       const next = { ...prev };
-      for (const e of employees) {
-        const d = m[e.id];
-        const r = next[e.id];
+      for (const id of matchedIds) {
+        const d = m[id];
+        const r = next[id];
         if (!r) continue;
-        if (d) {
-          const mergedNotes = r.notes ? `${r.notes}\n${d.notes}` : d.notes;
-          next[e.id] = { ...r, serviceCharge: d.total, notes: mergedNotes };
-          touched++;
-        }
+        const mergedNotes = r.notes ? `${r.notes}\n${d.notes}` : d.notes;
+        next[id] = { ...r, serviceCharge: d.total, notes: mergedNotes };
+        touched++;
       }
       return next;
     });
-    toast({
-      title: touched > 0 ? "Service charges pulled" : "No service charges found",
-      description:
-        touched > 0
-          ? `Applied to ${touched} employee${touched === 1 ? "" : "s"}.`
-          : `No service charge shares for pools overlapping ${periodStart} – ${periodEnd}.`,
-    });
+    if (opts.silent) return;
+    if (matchedIds.length === 0) {
+      toast({
+        title: "No service charges found",
+        description: `No service charge shares for pools overlapping ${periodStart} – ${periodEnd}.`,
+      });
+    } else if (touched === 0) {
+      toast({
+        title: "Employees not in this payroll",
+        description: `Found ${matchedIds.length} share${matchedIds.length === 1 ? "" : "s"}, but those employees are not loaded yet. Try again in a moment.`,
+      });
+    } else {
+      toast({
+        title: "Service charges pulled",
+        description: `Applied to ${touched} employee${touched === 1 ? "" : "s"}.`,
+      });
+    }
   };
 
-  // Auto-apply on first load
+  // Auto-apply on first load (silent)
   useEffect(() => {
-    if (serviceChargesByEmp && employees) applyServiceCharges(serviceChargesByEmp);
+    if (serviceChargesByEmp && employees && Object.keys(rows).length > 0) {
+      applyServiceCharges(serviceChargesByEmp, { silent: true });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serviceChargesByEmp, employees]);
+  }, [serviceChargesByEmp, employees, Object.keys(rows).length]);
 
   // Initialize rows whenever employees load
   useEffect(() => {
