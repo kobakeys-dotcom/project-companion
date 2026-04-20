@@ -310,6 +310,29 @@ export default function PayrollCalculatorPage() {
     toast({ title: "Attendance loaded", description: "Earned salaries prorated from worked days." });
   }, [workedDaysMap, employees, stdDays, toast]);
 
+  // Auto-pull all records (attendance, deductions, service charges) when
+  // employees + rows are ready, and re-pull whenever the pay period changes.
+  useEffect(() => {
+    if (!employees?.length || Object.keys(rows).length === 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [, d, s] = await Promise.all([
+          refetchAttendance(),
+          refetchDeductions(),
+          refetchServiceCharges(),
+        ]);
+        if (cancelled) return;
+        applyDeductions(d.data, { silent: true });
+        applyServiceCharges(s.data, { silent: true });
+      } catch {
+        /* silent */
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employees?.length, periodStart, periodEnd]);
+
   const updateRow = (id: string, patch: Partial<RowState>) => {
     setRows((prev) => {
       const cur = prev[id];
