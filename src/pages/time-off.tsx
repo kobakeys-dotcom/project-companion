@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeaveTracker } from "@/components/leave-tracker";
 import { LeaveEligibilityBanner } from "@/components/leave-eligibility-banner";
+import { computeLeaveEligibility } from "@/lib/leave-eligibility";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
