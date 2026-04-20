@@ -1261,7 +1261,7 @@ export default function TimeOffPage() {
                   Add Leave Type
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{editingLeaveType ? "Edit Leave Type" : "Create Leave Type"}</DialogTitle>
                   <DialogDescription>
