@@ -414,7 +414,50 @@ function EditEmployeeDialog({
           </div>
 
           <div className="border-t pt-4 mt-4">
-            <h4 className="font-medium mb-3">Documents</h4>
+            <h4 className="font-medium mb-3">Pension</h4>
+            <div className="rounded-lg border p-4 space-y-3">
+              <FormField
+                control={form.control}
+                name="pensionEnabled"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between">
+                    <div>
+                      <FormLabel className="text-sm">Enable Pension Deduction</FormLabel>
+                      <p className="text-xs text-muted-foreground">Deducted as % of basic salary at payroll time.</p>
+                    </div>
+                    <FormControl>
+                      <Switch checked={!!field.value} onCheckedChange={field.onChange} data-testid="switch-edit-pension-enabled" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pensionPercentage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Pension % of Basic Salary</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        max={100}
+                        placeholder="0"
+                        disabled={!form.watch("pensionEnabled")}
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+                        data-testid="input-edit-pension-pct"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="passportNumber" render={({ field }) => (
                 <FormItem><FormLabel>Passport Number</FormLabel><FormControl><Input {...field} data-testid="input-edit-passport-number" /></FormControl><FormMessage /></FormItem>
