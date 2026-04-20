@@ -130,27 +130,35 @@ export default function PayrollCalculatorPage() {
     },
   });
 
-  // Apply pulled deductions to rows whenever the map changes
-  useEffect(() => {
-    if (!deductionsByEmp || !employees) return;
+  const applyDeductions = (map: Record<string, { total: number; notes: string }> | undefined) => {
+    if (!employees) return;
+    const m = map ?? {};
+    let touched = 0;
     setRows((prev) => {
       const next = { ...prev };
-      let touched = 0;
       for (const e of employees) {
-        const d = deductionsByEmp[e.id];
+        const d = m[e.id];
         const r = next[e.id];
-        if (!r || !d) continue;
-        next[e.id] = { ...r, deductions: d.total, notes: d.notes };
-        touched++;
-      }
-      if (touched > 0) {
-        toast({
-          title: "Deductions pulled",
-          description: `Applied to ${touched} employee${touched === 1 ? "" : "s"} for ${payrollMonthKey}.`,
-        });
+        if (!r) continue;
+        if (d) {
+          next[e.id] = { ...r, deductions: d.total, notes: d.notes };
+          touched++;
+        }
       }
       return next;
     });
+    toast({
+      title: touched > 0 ? "Deductions pulled" : "No deductions found",
+      description:
+        touched > 0
+          ? `Applied to ${touched} employee${touched === 1 ? "" : "s"} for ${payrollMonthKey}.`
+          : `No approved/deducted entries marked for ${payrollMonthKey}. Set "Apply to payroll month" on the Deductions page.`,
+    });
+  };
+
+  // Auto-apply on first load
+  useEffect(() => {
+    if (deductionsByEmp && employees) applyDeductions(deductionsByEmp);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deductionsByEmp, employees]);
 
