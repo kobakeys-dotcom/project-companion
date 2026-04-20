@@ -1984,6 +1984,13 @@ export type Database = {
       email_for_employee_code: { Args: { _code: string }; Returns: string }
       expire_untaken_leave: { Args: never; Returns: undefined }
       generate_loan_schedule: { Args: { _loan_id: string }; Returns: undefined }
+      get_loan_tokens: {
+        Args: { _loan_id: string }
+        Returns: {
+          dept_token: string
+          mgmt_token: string
+        }[]
+      }
       get_time_off_tokens: {
         Args: { _request_id: string }
         Returns: {
