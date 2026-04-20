@@ -523,6 +523,7 @@ export default function PayrollCalculatorPage() {
                       <TableCell>{numInput(r.attendance, (n) => updateRow(e.id, { attendance: n }))}</TableCell>
                       <TableCell>{numInput(r.living, (n) => updateRow(e.id, { living: n }))}</TableCell>
                       <TableCell>{numInput(r.additionalService, (n) => updateRow(e.id, { additionalService: n }))}</TableCell>
+                      <TableCell>{numInput(r.serviceCharge, (n) => updateRow(e.id, { serviceCharge: n }))}</TableCell>
                       <TableCell>{numInput(r.otHours, (n) => updateRow(e.id, { otHours: n }), "w-16")}</TableCell>
                       <TableCell>{numInput(r.otRate, (n) => updateRow(e.id, { otRate: n }), "w-20")}</TableCell>
                       <TableCell className="font-mono text-sm">{fmt(c.ot)}</TableCell>
