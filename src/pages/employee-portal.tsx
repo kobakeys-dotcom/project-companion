@@ -258,11 +258,15 @@ function RequestTimeOffDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" disabled={leaveTypes.length === 0}>
-          <Plus className="h-4 w-4 mr-1" />Request Leave
-        </Button>
-      </DialogTrigger>
+      {trigger !== undefined ? (
+        trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null
+      ) : (
+        <DialogTrigger asChild>
+          <Button size="sm" disabled={leaveTypes.length === 0}>
+            <Plus className="h-4 w-4 mr-1" />Request Leave
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Request Time Off</DialogTitle>
