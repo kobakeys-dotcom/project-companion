@@ -193,15 +193,39 @@ const timeOffSchema = z.object({
 });
 type TimeOffForm = z.infer<typeof timeOffSchema>;
 
-function RequestTimeOffDialog({ employee, leaveTypes }: { employee: Employee; leaveTypes: LeaveType[] }) {
+function RequestTimeOffDialog({
+  employee,
+  leaveTypes,
+  preselectedLeaveTypeId,
+  open: controlledOpen,
+  onOpenChange,
+  trigger,
+}: {
+  employee: Employee;
+  leaveTypes: LeaveType[];
+  preselectedLeaveTypeId?: string;
+  open?: boolean;
+  onOpenChange?: (o: boolean) => void;
+  trigger?: React.ReactNode;
+}) {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (o: boolean) => {
+    onOpenChange ? onOpenChange(o) : setInternalOpen(o);
+  };
   const eligibility = computeLeaveEligibility((employee as any).startDate, (employee as any).createdAt);
   const form = useForm<TimeOffForm>({
     resolver: zodResolver(timeOffSchema),
-    defaultValues: { leaveTypeId: "", startDate: "", endDate: "", reason: "" },
+    defaultValues: { leaveTypeId: preselectedLeaveTypeId ?? "", startDate: "", endDate: "", reason: "" },
   });
+
+  useEffect(() => {
+    if (open && preselectedLeaveTypeId) {
+      form.setValue("leaveTypeId", preselectedLeaveTypeId);
+    }
+  }, [open, preselectedLeaveTypeId]);
 
   const selectedLeaveTypeId = form.watch("leaveTypeId");
   const selectedLeaveType = useMemo(
