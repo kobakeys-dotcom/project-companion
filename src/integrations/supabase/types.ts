@@ -1060,6 +1060,7 @@ export type Database = {
           createdAt: string
           daysAllowed: number
           description: string | null
+          enforceEligibility: boolean
           id: string
           isActive: boolean
           name: string
@@ -1073,6 +1074,7 @@ export type Database = {
           createdAt?: string
           daysAllowed?: number
           description?: string | null
+          enforceEligibility?: boolean
           id?: string
           isActive?: boolean
           name: string
@@ -1086,6 +1088,7 @@ export type Database = {
           createdAt?: string
           daysAllowed?: number
           description?: string | null
+          enforceEligibility?: boolean
           id?: string
           isActive?: boolean
           name?: string
