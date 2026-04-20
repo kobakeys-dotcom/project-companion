@@ -198,28 +198,36 @@ export default function PayrollCalculatorPage() {
     },
   });
 
-  // Apply pulled service charges to rows
-  useEffect(() => {
-    if (!serviceChargesByEmp || !employees) return;
+  const applyServiceCharges = (map: Record<string, { total: number; notes: string }> | undefined) => {
+    if (!employees) return;
+    const m = map ?? {};
+    let touched = 0;
     setRows((prev) => {
       const next = { ...prev };
-      let touched = 0;
       for (const e of employees) {
-        const d = serviceChargesByEmp[e.id];
+        const d = m[e.id];
         const r = next[e.id];
-        if (!r || !d) continue;
-        const mergedNotes = r.notes ? `${r.notes}\n${d.notes}` : d.notes;
-        next[e.id] = { ...r, serviceCharge: d.total, notes: mergedNotes };
-        touched++;
-      }
-      if (touched > 0) {
-        toast({
-          title: "Service charges pulled",
-          description: `Applied to ${touched} employee${touched === 1 ? "" : "s"}.`,
-        });
+        if (!r) continue;
+        if (d) {
+          const mergedNotes = r.notes ? `${r.notes}\n${d.notes}` : d.notes;
+          next[e.id] = { ...r, serviceCharge: d.total, notes: mergedNotes };
+          touched++;
+        }
       }
       return next;
     });
+    toast({
+      title: touched > 0 ? "Service charges pulled" : "No service charges found",
+      description:
+        touched > 0
+          ? `Applied to ${touched} employee${touched === 1 ? "" : "s"}.`
+          : `No service charge shares for pools overlapping ${periodStart} – ${periodEnd}.`,
+    });
+  };
+
+  // Auto-apply on first load
+  useEffect(() => {
+    if (serviceChargesByEmp && employees) applyServiceCharges(serviceChargesByEmp);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceChargesByEmp, employees]);
 
