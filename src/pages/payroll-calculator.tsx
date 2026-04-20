@@ -336,7 +336,7 @@ export default function PayrollCalculatorPage() {
           dutyAllowance: Math.round(r.duty) * 100,
           attendanceAllowance: Math.round(r.attendance) * 100,
           livingAllowance: Math.round(r.living) * 100,
-          additionalServiceAllowance: Math.round(r.additionalService) * 100,
+          additionalServiceAllowance: (Math.round(r.additionalService) + Math.round(r.serviceCharge)) * 100,
           overtimeHours: r.otHours,
           overtimeRate: Math.round(r.otRate) * 100,
           overtimeAmount: Math.round(c.ot) * 100,
