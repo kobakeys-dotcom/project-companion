@@ -475,26 +475,27 @@ export default function PayrollCalculatorPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Pay Period</CardTitle>
-          <CardDescription>Set the period and pull worked days from attendance.</CardDescription>
+        <CardHeader className="py-3">
+          <CardTitle className="text-base">Pay Period</CardTitle>
+          <CardDescription className="text-xs">Set the period and pull worked days from attendance.</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <CardContent className="pb-3 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
           <div>
-            <Label>Month</Label>
-            <Input value={monthLabel} onChange={(e) => setMonthLabel(e.target.value)} />
+            <Label className="text-xs">Month</Label>
+            <Input className="h-8 text-sm" value={monthLabel} onChange={(e) => setMonthLabel(e.target.value)} />
           </div>
           <div>
-            <Label>Period Start</Label>
-            <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
+            <Label className="text-xs">Period Start</Label>
+            <Input className="h-8 text-sm" type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
           </div>
           <div>
-            <Label>Period End</Label>
-            <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
+            <Label className="text-xs">Period End</Label>
+            <Input className="h-8 text-sm" type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
           </div>
           <div>
-            <Label>Standard Days</Label>
+            <Label className="text-xs">Standard Days</Label>
             <Input
+              className="h-8 text-sm"
               type="number"
               min={1}
               value={stdDays}
@@ -502,36 +503,38 @@ export default function PayrollCalculatorPage() {
             />
           </div>
           <div className="flex items-end">
-            <Button variant="outline" onClick={() => refetchAttendance()} className="w-full">
-              <RefreshCw className="h-4 w-4 mr-2" /> Pull Attendance
+            <Button size="sm" variant="outline" onClick={() => refetchAttendance()} className="w-full h-8 text-xs">
+              <RefreshCw className="h-3 w-3 mr-1" /> Pull Attendance
             </Button>
           </div>
           <div className="flex items-end">
             <Button
+              size="sm"
               variant="outline"
               onClick={async () => {
                 const { data } = await refetchDeductions();
                 applyDeductions(data);
               }}
-              className="w-full"
+              className="w-full h-8 text-xs"
             >
-              <RefreshCw className="h-4 w-4 mr-2" /> Pull Deductions
+              <RefreshCw className="h-3 w-3 mr-1" /> Pull Deductions
             </Button>
           </div>
           <div className="flex items-end">
             <Button
+              size="sm"
               variant="outline"
               onClick={async () => {
                 const { data } = await refetchServiceCharges();
                 applyServiceCharges(data);
               }}
-              className="w-full"
+              className="w-full h-8 text-xs"
             >
-              <RefreshCw className="h-4 w-4 mr-2" /> Pull Service Charges
+              <RefreshCw className="h-3 w-3 mr-1" /> Pull Service Charges
             </Button>
           </div>
           <div className="flex items-end">
-            <Button onClick={savePeriod} className="w-full">
+            <Button size="sm" onClick={savePeriod} className="w-full h-8 text-xs">
               Save Period
             </Button>
           </div>
