@@ -130,37 +130,50 @@ export default function PayrollCalculatorPage() {
     },
   });
 
-  const applyDeductions = (map: Record<string, { total: number; notes: string }> | undefined) => {
-    if (!employees) return;
+  const applyDeductions = (
+    map: Record<string, { total: number; notes: string }> | undefined,
+    opts: { silent?: boolean } = {},
+  ) => {
     const m = map ?? {};
+    const matchedIds = Object.keys(m);
     let touched = 0;
     setRows((prev) => {
       const next = { ...prev };
-      for (const e of employees) {
-        const d = m[e.id];
-        const r = next[e.id];
+      for (const id of matchedIds) {
+        const d = m[id];
+        const r = next[id];
         if (!r) continue;
-        if (d) {
-          next[e.id] = { ...r, deductions: d.total, notes: d.notes };
-          touched++;
-        }
+        next[id] = { ...r, deductions: d.total, notes: d.notes };
+        touched++;
       }
       return next;
     });
-    toast({
-      title: touched > 0 ? "Deductions pulled" : "No deductions found",
-      description:
-        touched > 0
-          ? `Applied to ${touched} employee${touched === 1 ? "" : "s"} for ${payrollMonthKey}.`
-          : `No approved/deducted entries marked for ${payrollMonthKey}. Set "Apply to payroll month" on the Deductions page.`,
-    });
+    if (opts.silent) return;
+    if (matchedIds.length === 0) {
+      toast({
+        title: "No deductions found",
+        description: `No approved/deducted entries marked for ${payrollMonthKey}. Set "Apply to payroll month" on the Deductions page.`,
+      });
+    } else if (touched === 0) {
+      toast({
+        title: "Employee not in this payroll",
+        description: `Found ${matchedIds.length} deduction${matchedIds.length === 1 ? "" : "s"} for ${payrollMonthKey}, but the employee is not loaded in the calculator yet. Try again in a moment.`,
+      });
+    } else {
+      toast({
+        title: "Deductions pulled",
+        description: `Applied to ${touched} employee${touched === 1 ? "" : "s"} for ${payrollMonthKey}.`,
+      });
+    }
   };
 
-  // Auto-apply on first load
+  // Auto-apply once both rows and deductions are available (silent — no toast on mount)
   useEffect(() => {
-    if (deductionsByEmp && employees) applyDeductions(deductionsByEmp);
+    if (deductionsByEmp && employees && Object.keys(rows).length > 0) {
+      applyDeductions(deductionsByEmp, { silent: true });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deductionsByEmp, employees]);
+  }, [deductionsByEmp, employees, Object.keys(rows).length]);
 
   // Paid service charge shares whose pool period overlaps payroll period
   const { data: serviceChargesByEmp, refetch: refetchServiceCharges } = useQuery<
