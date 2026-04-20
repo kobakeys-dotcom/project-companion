@@ -661,6 +661,7 @@ export default function PayrollCalculatorPage() {
                   <TableHead>Gross</TableHead>
                   <TableHead>Deduct.</TableHead>
                   <TableHead>Pension</TableHead>
+                  <TableHead>Loan</TableHead>
                   <TableHead className="min-w-32">Notes</TableHead>
                   <TableHead className="text-right">Net</TableHead>
                 </TableRow>
@@ -701,6 +702,18 @@ export default function PayrollCalculatorPage() {
                         )}
                       </TableCell>
                       <TableCell>
+                        {r.loanRepayment > 0 ? (
+                          <div className="font-mono text-sm">
+                            <div>{fmt(r.loanRepayment)}</div>
+                            {r.loanNote && (
+                              <div className="text-[10px] text-muted-foreground whitespace-pre-line">{r.loanNote}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <Input
                           className="h-8"
                           value={r.notes}
@@ -724,6 +737,7 @@ export default function PayrollCalculatorPage() {
                   <TableCell>{fmt(totals.gross)}</TableCell>
                   <TableCell>{fmt(totals.ded)}</TableCell>
                   <TableCell>{fmt(totals.pension)}</TableCell>
+                  <TableCell>{fmt(totals.loan)}</TableCell>
                   <TableCell />
                   <TableCell className="text-right text-primary">{fmt(totals.net)}</TableCell>
                 </TableRow>
