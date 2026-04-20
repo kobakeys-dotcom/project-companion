@@ -460,6 +460,11 @@ export default function PayrollCalculatorPage() {
               <RefreshCw className="h-4 w-4 mr-2" /> Pull Deductions
             </Button>
           </div>
+          <div className="flex items-end">
+            <Button variant="outline" onClick={() => refetchServiceCharges()} className="w-full">
+              <RefreshCw className="h-4 w-4 mr-2" /> Pull Service Charges
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
