@@ -530,12 +530,11 @@ export default function PayrollCalculatorPage() {
               <RefreshCw className="h-4 w-4 mr-2" /> Pull Service Charges
             </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Employees ({employees?.length ?? 0})</CardTitle>
+          <div className="flex items-end">
+            <Button onClick={savePeriod} className="w-full">
+              Save Period
+            </Button>
+          </div>
           <CardDescription>
             Earned salary auto-prorates: <code className="px-1">basic × workedDays / stdDays</code>.
             All amounts are whole currency units.
