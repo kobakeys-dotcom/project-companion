@@ -1848,6 +1848,100 @@ export default function EmployeePortal() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* ----- LOANS ----- */}
+          <TabsContent value="loans">
+            <div className="space-y-4">
+              <Card>
+                <CardHeader className="flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardTitle>My Loans</CardTitle>
+                    <CardDescription>Request a loan and track approval status.</CardDescription>
+                  </div>
+                  <RequestLoanDialog employee={employee} currency={currency} />
+                </CardHeader>
+                <CardContent>
+                  {loans.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-8 text-center">No loan requests yet.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {loans.map((l) => {
+                        const lrs = loanRepayments.filter((r) => r.loanId === l.id);
+                        const paid = lrs.filter((r) => r.status === "paid").reduce((s, r) => s + Number(r.amount || 0), 0);
+                        const remaining = Math.max(0, Number(l.amount) - paid);
+                        const monthly = Number(l.amount) / Math.max(1, l.recoveryMonths);
+                        return (
+                          <div key={l.id} className="p-4 rounded-lg border space-y-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="font-semibold flex items-center gap-2">
+                                  <Banknote className="h-4 w-4" />
+                                  {fmtMoney(Number(l.amount), l.currency)}
+                                  <span className="text-xs font-normal text-muted-foreground">
+                                    over {l.recoveryMonths} months
+                                  </span>
+                                </p>
+                                {l.reason && <p className="text-sm text-muted-foreground mt-1">{l.reason}</p>}
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Requested {format(parseISO(l.createdAt), "MMM d, yyyy")}
+                                  {l.startMonth ? ` · Starts ${l.startMonth}` : ""}
+                                </p>
+                              </div>
+                              <StatusBadge status={l.status} />
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                              <div><p className="text-muted-foreground text-xs">Monthly</p><p className="font-medium">{fmtMoney(monthly, l.currency)}</p></div>
+                              <div><p className="text-muted-foreground text-xs">Paid</p><p className="font-medium">{fmtMoney(paid, l.currency)}</p></div>
+                              <div><p className="text-muted-foreground text-xs">Remaining</p><p className="font-medium">{fmtMoney(remaining, l.currency)}</p></div>
+                              <div><p className="text-muted-foreground text-xs">Installments</p><p className="font-medium">{lrs.filter((r) => r.status === "paid").length}/{l.recoveryMonths}</p></div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <div className="flex items-center justify-between p-2 rounded border">
+                                <span className="text-muted-foreground">Department</span><StatusBadge status={l.deptApprovalStatus} />
+                              </div>
+                              <div className="flex items-center justify-between p-2 rounded border">
+                                <span className="text-muted-foreground">Management</span><StatusBadge status={l.mgmtApprovalStatus} />
+                              </div>
+                              <div className="flex items-center justify-between p-2 rounded border">
+                                <span className="text-muted-foreground">Admin</span><StatusBadge status={l.adminApprovalStatus} />
+                              </div>
+                            </div>
+                            {lrs.length > 0 && (
+                              <div className="pt-2 border-t">
+                                <p className="text-xs font-medium text-muted-foreground mb-2">Repayment Schedule</p>
+                                <div className="overflow-x-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead className="h-8">#</TableHead>
+                                        <TableHead className="h-8">Month</TableHead>
+                                        <TableHead className="h-8 text-right">Amount</TableHead>
+                                        <TableHead className="h-8">Status</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {lrs.map((r) => (
+                                        <TableRow key={r.id}>
+                                          <TableCell className="py-1">{r.installmentNumber}</TableCell>
+                                          <TableCell className="py-1">{r.month}</TableCell>
+                                          <TableCell className="py-1 text-right font-mono">{fmtMoney(Number(r.amount), l.currency)}</TableCell>
+                                          <TableCell className="py-1"><StatusBadge status={r.status} /></TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
         </Tabs>
       </main>
     </div>
