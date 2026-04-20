@@ -23,6 +23,8 @@ type EmployeeRow = {
   attendanceAllowance: number | null;
   accommodationAllowance: number | null; // used as Living Allowance
   additionalServiceAllowance: number | null;
+  pensionEnabled: boolean | null;
+  pensionPercentage: number | null;
   companyId: string;
 };
 
@@ -41,6 +43,9 @@ type RowState = {
   otRate: number;       // per hour, whole units
   serviceCharge: number; // pulled from service_charge_shares
   deductions: number;
+  pensionEnabled: boolean;
+  pensionPercentage: number;
+  pension: number;       // computed: basic × pct%
   notes: string;
 };
 
@@ -81,7 +86,7 @@ export default function PayrollCalculatorPage() {
       const { data, error } = await supabase
         .from("employees")
         .select(
-          'id, firstName, lastName, jobTitle, basicSalary, fixedAllowance, dutyAllowance, attendanceAllowance, accommodationAllowance, additionalServiceAllowance, companyId',
+          'id, firstName, lastName, jobTitle, basicSalary, fixedAllowance, dutyAllowance, attendanceAllowance, accommodationAllowance, additionalServiceAllowance, pensionEnabled, pensionPercentage, companyId',
         )
         .eq("employmentStatus", "active")
         .order("firstName");
@@ -273,6 +278,9 @@ export default function PayrollCalculatorPage() {
       for (const e of employees) {
         const existing = prev[e.id];
         const basic = Math.round((e.basicSalary ?? 0) as number);
+        const pensionEnabled = !!e.pensionEnabled;
+        const pensionPct = Number(e.pensionPercentage ?? 0);
+        const pension = pensionEnabled ? Math.round((basic * pensionPct) / 100) : 0;
         next[e.id] = existing ?? {
           basic,
           fixed: Math.round((e.fixedAllowance ?? 0) as number),
@@ -286,6 +294,9 @@ export default function PayrollCalculatorPage() {
           otRate: 0,
           serviceCharge: 0,
           deductions: 0,
+          pensionEnabled,
+          pensionPercentage: pensionPct,
+          pension,
           notes: "",
         };
       }
