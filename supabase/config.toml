@@ -1,1 +1,4 @@
 project_id = "cexyqgjxuwlcoxqendlw"
+
+[functions.approve-leave]
+verify_jwt = false

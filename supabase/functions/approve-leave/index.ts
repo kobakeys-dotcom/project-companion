@@ -33,24 +33,18 @@ Deno.serve(async (req) => {
 
   const statusColumn = type === "dept" ? "deptApprovalStatus" : "mgmtApprovalStatus";
 
-  // Verify token from the locked-down tokens table.
-  const { data: tokenRow, error: tokenErr } = await supabase
-    .from("time_off_approval_tokens")
-    .select("dept_token,mgmt_token")
-    .eq("request_id", id)
-    .maybeSingle();
-  if (tokenErr || !tokenRow) return json({ message: "Request not found" }, 404);
-  const expected = type === "dept" ? tokenRow.dept_token : tokenRow.mgmt_token;
-  if (!expected || expected !== token) {
-    return json({ message: "Invalid or expired token" }, 403);
-  }
-
+  // Load request and verify token from the request row itself.
   const { data: reqRow, error: reqErr } = await supabase
     .from("time_off_requests")
     .select("*")
     .eq("id", id)
     .maybeSingle();
   if (reqErr || !reqRow) return json({ message: "Request not found" }, 404);
+
+  const expected = type === "dept" ? reqRow.deptApprovalToken : reqRow.mgmtApprovalToken;
+  if (!expected || expected !== token) {
+    return json({ message: "Invalid or expired token" }, 403);
+  }
 
   // Hydrate related entities
   const [{ data: emp }, { data: leaveType }] = await Promise.all([
