@@ -234,8 +234,7 @@ export default function PayrollCalculatorPage() {
         const d = m[id];
         const r = next[id];
         if (!r) continue;
-        const mergedNotes = r.notes ? `${r.notes}\n${d.notes}` : d.notes;
-        next[id] = { ...r, serviceCharge: d.total, notes: mergedNotes };
+        next[id] = { ...r, serviceCharge: d.total };
       }
       return next;
     });
