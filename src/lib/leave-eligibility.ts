@@ -35,8 +35,8 @@ export function computeLeaveEligibility(
   const ef = stripTime(eligibleFrom);
 
   if (t < ef) {
-    const windowEnd = addDays(addYears(ef, 2), -1);
-    const expiry = addDays(addMonths(windowEnd, 3), 0);
+    const windowEnd = addDays(addMonths(ef, 3), -1);
+    const expiry = windowEnd;
     return {
       anchorDate: anchor,
       eligibleFrom: ef,
@@ -50,11 +50,13 @@ export function computeLeaveEligibility(
     };
   }
 
+  // Each cycle: eligible for 3 months, then a fresh 2-year wait until next eligibility.
+  // Cycle length = 2 years (next eligibility) but window is only the first 3 months.
   const monthsSince = differenceInCalendarMonths(t, ef);
   const cycle = Math.floor(monthsSince / 24) + 1;
   const windowStart = addYears(ef, (cycle - 1) * 2);
-  const windowEnd = addDays(addYears(windowStart, 2), -1);
-  const expiry = addMonths(windowEnd, 3);
+  const windowEnd = addDays(addMonths(windowStart, 3), -1);
+  const expiry = windowEnd;
 
   return {
     anchorDate: anchor,
