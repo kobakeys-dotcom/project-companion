@@ -325,6 +325,87 @@ function RequestTimeOffDialog({
 }
 
 // ============================================================
+// Profile details cards (Contract, Personal, Salary)
+// ============================================================
+function ProfileDetailsCards({ employee, currency }: { employee: any; currency: string }) {
+  const fmtDate = (d?: string | null) => (d ? format(parseISO(d), "MMM d, yyyy") : "—");
+  const duration = (() => {
+    const s = employee.contractSignedDate;
+    const e = employee.contractExpiryDate;
+    if (!s || !e) return "—";
+    const months = Math.max(0, Math.round((new Date(e).getTime() - new Date(s).getTime()) / (1000 * 60 * 60 * 24 * 30.4375)));
+    const y = Math.floor(months / 12);
+    const m = months % 12;
+    return [y && `${y}y`, m && `${m}m`].filter(Boolean).join(" ") || "—";
+  })();
+  const total =
+    (employee.basicSalary || 0) +
+    (employee.fixedAllowance || 0) +
+    (employee.dutyAllowance || 0) +
+    (employee.attendanceAllowance || 0) +
+    (employee.accommodationAllowance || 0) +
+    (employee.additionalServiceAllowance || 0);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" />Contract Details</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-4 text-sm">
+          <div><p className="text-xs text-muted-foreground mb-1">Start Date</p><p className="font-medium">{fmtDate(employee.startDate)}</p></div>
+          <div><p className="text-xs text-muted-foreground mb-1">Last Promotion Date</p><p className="font-medium">{fmtDate(employee.lastPromotionDate)}</p></div>
+          <div><p className="text-xs text-muted-foreground mb-1">Contract Type</p><p className="font-medium">{employee.contractType || "—"}</p></div>
+          <div><p className="text-xs text-muted-foreground mb-1">Signed Date</p><p className="font-medium">{fmtDate(employee.contractSignedDate)}</p></div>
+          <div><p className="text-xs text-muted-foreground mb-1">Expiry Date</p><p className="font-medium">{fmtDate(employee.contractExpiryDate)}</p></div>
+          <div><p className="text-xs text-muted-foreground mb-1">Duration</p><p className="font-medium">{duration}</p></div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2"><UserIcon className="h-4 w-4" />Personal Details</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-4 text-sm">
+          <div><p className="text-xs text-muted-foreground mb-1">Date of Birth</p><p className="font-medium">{fmtDate(employee.dateOfBirth)}</p></div>
+          <div><p className="text-xs text-muted-foreground mb-1">Permanent Address</p><p className="font-medium">{employee.permanentAddress || "—"}</p></div>
+          <div><p className="text-xs text-muted-foreground mb-1">Nationality</p><p className="font-medium">{employee.nationality || "—"}</p></div>
+          <div><p className="text-xs text-muted-foreground mb-1">Phone</p><p className="font-medium">{employee.phone || "—"}</p></div>
+        </CardContent>
+      </Card>
+
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2"><Wallet className="h-4 w-4" />Salary Package</CardTitle>
+          <CardDescription>Read-only. Contact your administrator for changes.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[
+              { label: "Basic Salary", value: employee.basicSalary },
+              { label: "Fixed Allowance", value: employee.fixedAllowance },
+              { label: "Duty Allowance", value: employee.dutyAllowance },
+              { label: "Attendance Allowance", value: employee.attendanceAllowance },
+              { label: "Living Allowance", value: employee.accommodationAllowance },
+              { label: "Additional Service Allowance", value: employee.additionalServiceAllowance },
+            ].map((item) => (
+              <div key={item.label} className="text-center p-3 bg-muted/50 rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">{item.label}</p>
+                <p className="text-lg font-bold">{fmtMoney(item.value || 0, currency)}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex justify-between items-center border-t pt-4">
+            <span className="text-muted-foreground font-medium">Total Package</span>
+            <span className="text-xl font-bold text-primary">{fmtMoney(total, currency)}</span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ============================================================
 // Leave Types overview table (per-type eligibility & expiry)
 // ============================================================
 function LeaveTypesTable({ employee, leaveTypes }: { employee: Employee; leaveTypes: LeaveType[] }) {
@@ -1167,7 +1248,8 @@ export default function EmployeePortal() {
 
         {/* Tabs */}
         <Tabs defaultValue="time-clock" className="space-y-4">
-          <TabsList className="grid grid-cols-5 lg:grid-cols-10 w-full">
+          <TabsList className="grid grid-cols-6 lg:grid-cols-11 w-full">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="time-clock">Clock</TabsTrigger>
             <TabsTrigger value="time-off">Time Off</TabsTrigger>
             <TabsTrigger value="expenses">Expenses</TabsTrigger>
@@ -1179,6 +1261,11 @@ export default function EmployeePortal() {
             <TabsTrigger value="disciplinary">Discipline</TabsTrigger>
             <TabsTrigger value="deductions">Deductions</TabsTrigger>
           </TabsList>
+
+          {/* ----- PROFILE ----- */}
+          <TabsContent value="profile" className="space-y-4">
+            <ProfileDetailsCards employee={employee} currency={currency} />
+          </TabsContent>
 
           {/* ----- TIME CLOCK ----- */}
           <TabsContent value="time-clock">

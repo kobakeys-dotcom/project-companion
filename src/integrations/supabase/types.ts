@@ -639,15 +639,22 @@ export type Database = {
           accommodationId: string | null
           accountNumber1: string | null
           accountNumber2: string | null
+          additionalServiceAllowance: number | null
+          attendanceAllowance: number | null
           bankName1: string | null
           bankName2: string | null
           basicSalary: number | null
           bio: string | null
           companyId: string
+          contractExpiryDate: string | null
+          contractSignedDate: string | null
+          contractType: string | null
           createdAt: string
           currency1: string | null
           currency2: string | null
+          dateOfBirth: string | null
           departmentId: string | null
+          dutyAllowance: number | null
           email: string
           emergencyContactName: string | null
           emergencyContactPhone: string | null
@@ -656,17 +663,20 @@ export type Database = {
           employmentStatus: Database["public"]["Enums"]["employment_status"]
           employmentType: Database["public"]["Enums"]["employment_type"]
           firstName: string
+          fixedAllowance: number | null
           foodAllowance: number | null
           id: string
           insuranceExpiryDate: string | null
           jobTitle: string
           lastName: string
+          lastPromotionDate: string | null
           location: string | null
           medicalExpiryDate: string | null
           nationality: string | null
           otherAllowance: number | null
           passportExpiryDate: string | null
           passportNumber: string | null
+          permanentAddress: string | null
           phone: string | null
           profileImageUrl: string | null
           projectId: string | null
@@ -694,15 +704,22 @@ export type Database = {
           accommodationId?: string | null
           accountNumber1?: string | null
           accountNumber2?: string | null
+          additionalServiceAllowance?: number | null
+          attendanceAllowance?: number | null
           bankName1?: string | null
           bankName2?: string | null
           basicSalary?: number | null
           bio?: string | null
           companyId: string
+          contractExpiryDate?: string | null
+          contractSignedDate?: string | null
+          contractType?: string | null
           createdAt?: string
           currency1?: string | null
           currency2?: string | null
+          dateOfBirth?: string | null
           departmentId?: string | null
+          dutyAllowance?: number | null
           email: string
           emergencyContactName?: string | null
           emergencyContactPhone?: string | null
@@ -711,17 +728,20 @@ export type Database = {
           employmentStatus?: Database["public"]["Enums"]["employment_status"]
           employmentType?: Database["public"]["Enums"]["employment_type"]
           firstName: string
+          fixedAllowance?: number | null
           foodAllowance?: number | null
           id?: string
           insuranceExpiryDate?: string | null
           jobTitle: string
           lastName: string
+          lastPromotionDate?: string | null
           location?: string | null
           medicalExpiryDate?: string | null
           nationality?: string | null
           otherAllowance?: number | null
           passportExpiryDate?: string | null
           passportNumber?: string | null
+          permanentAddress?: string | null
           phone?: string | null
           profileImageUrl?: string | null
           projectId?: string | null
@@ -749,15 +769,22 @@ export type Database = {
           accommodationId?: string | null
           accountNumber1?: string | null
           accountNumber2?: string | null
+          additionalServiceAllowance?: number | null
+          attendanceAllowance?: number | null
           bankName1?: string | null
           bankName2?: string | null
           basicSalary?: number | null
           bio?: string | null
           companyId?: string
+          contractExpiryDate?: string | null
+          contractSignedDate?: string | null
+          contractType?: string | null
           createdAt?: string
           currency1?: string | null
           currency2?: string | null
+          dateOfBirth?: string | null
           departmentId?: string | null
+          dutyAllowance?: number | null
           email?: string
           emergencyContactName?: string | null
           emergencyContactPhone?: string | null
@@ -766,17 +793,20 @@ export type Database = {
           employmentStatus?: Database["public"]["Enums"]["employment_status"]
           employmentType?: Database["public"]["Enums"]["employment_type"]
           firstName?: string
+          fixedAllowance?: number | null
           foodAllowance?: number | null
           id?: string
           insuranceExpiryDate?: string | null
           jobTitle?: string
           lastName?: string
+          lastPromotionDate?: string | null
           location?: string | null
           medicalExpiryDate?: string | null
           nationality?: string | null
           otherAllowance?: number | null
           passportExpiryDate?: string | null
           passportNumber?: string | null
+          permanentAddress?: string | null
           phone?: string | null
           profileImageUrl?: string | null
           projectId?: string | null

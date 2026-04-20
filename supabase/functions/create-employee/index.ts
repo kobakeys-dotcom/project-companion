@@ -196,6 +196,10 @@ Deno.serve(async (req) => {
       "quotaExpiryDate",
       "uniformIssuedDate",
       "safetyShoeIssuedDate",
+      "lastPromotionDate",
+      "contractSignedDate",
+      "contractExpiryDate",
+      "dateOfBirth",
     ]);
     const cleaned: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(rest)) {
