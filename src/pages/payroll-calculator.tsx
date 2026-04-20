@@ -546,6 +546,7 @@ export default function PayrollCalculatorPage() {
                   <TableCell />
                   <TableCell>{fmt(totals.basic)}</TableCell>
                   <TableCell colSpan={5}>{fmt(totals.allowances)} (allowances)</TableCell>
+                  <TableCell>{fmt(totals.sc)}</TableCell>
                   <TableCell />
                   <TableCell />
                   <TableCell>{fmt(totals.ot)}</TableCell>
