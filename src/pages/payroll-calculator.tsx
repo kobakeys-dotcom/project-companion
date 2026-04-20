@@ -191,6 +191,46 @@ export default function PayrollCalculatorPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deductionsByEmp, employees, Object.keys(rows).length]);
 
+  // Loan repayments scheduled for the payroll month
+  const { data: loanRepaymentsByEmp, refetch: refetchLoanRepayments } = useQuery<
+    Record<string, { total: number; notes: string }>
+  >({
+    queryKey: ["calc-loan-repayments", payrollMonthKey],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("loan_repayments")
+        .select("id, employeeId, amount, month, status, installmentNumber")
+        .eq("month", payrollMonthKey)
+        .in("status", ["scheduled", "paid"]);
+      if (error) throw error;
+      const map: Record<string, { total: number; notes: string }> = {};
+      for (const r of (data ?? []) as Array<{ employeeId: string; amount: number; installmentNumber: number }>) {
+        const cur = map[r.employeeId] ?? { total: 0, notes: "" };
+        cur.total += Number(r.amount) || 0;
+        const line = `Loan repayment (#${r.installmentNumber}): ${Number(r.amount).toFixed(2)}`;
+        cur.notes = cur.notes ? `${cur.notes}\n${line}` : line;
+        map[r.employeeId] = cur;
+      }
+      return map;
+    },
+  });
+
+  // Apply loan repayments into rows whenever fetched
+  useEffect(() => {
+    if (!loanRepaymentsByEmp || !employees || Object.keys(rows).length === 0) return;
+    setRows((prev) => {
+      const next = { ...prev };
+      for (const e of employees) {
+        const r = next[e.id];
+        if (!r) continue;
+        const lr = loanRepaymentsByEmp[e.id];
+        next[e.id] = { ...r, loanRepayment: lr?.total ?? 0, loanNote: lr?.notes ?? "" };
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loanRepaymentsByEmp, employees, Object.keys(rows).length]);
+
   // Paid service charge shares whose pool period overlaps payroll period
   const { data: serviceChargesByEmp, refetch: refetchServiceCharges } = useQuery<
     Record<string, { total: number; notes: string }>
