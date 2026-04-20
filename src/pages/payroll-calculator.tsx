@@ -154,6 +154,67 @@ export default function PayrollCalculatorPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deductionsByEmp, employees]);
 
+  // Paid service charge shares whose pool period overlaps payroll period
+  const { data: serviceChargesByEmp, refetch: refetchServiceCharges } = useQuery<
+    Record<string, { total: number; notes: string }>
+  >({
+    queryKey: ["calc-service-charges", periodStart, periodEnd],
+    queryFn: async () => {
+      const { data: pools, error: pErr } = await (supabase as any)
+        .from("service_charge_pools")
+        .select("id, outletName, periodStart, periodEnd")
+        .lte("periodStart", periodEnd)
+        .gte("periodEnd", periodStart);
+      if (pErr) throw pErr;
+      const poolIds = (pools ?? []).map((p: any) => p.id);
+      if (poolIds.length === 0) return {};
+      const poolMap: Record<string, string> = Object.fromEntries(
+        (pools ?? []).map((p: any) => [p.id, p.outletName]),
+      );
+      const { data: shares, error: sErr } = await (supabase as any)
+        .from("service_charge_shares")
+        .select("employeeId, poolId, shareAmount, payoutStatus")
+        .in("poolId", poolIds);
+      if (sErr) throw sErr;
+      const map: Record<string, { total: number; notes: string }> = {};
+      for (const s of (shares ?? []) as Array<{
+        employeeId: string; poolId: string; shareAmount: number; payoutStatus: string;
+      }>) {
+        const cur = map[s.employeeId] ?? { total: 0, notes: "" };
+        cur.total += Number(s.shareAmount) || 0;
+        const line = `Service charge (${poolMap[s.poolId] ?? "pool"}): ${Number(s.shareAmount).toFixed(2)}`;
+        cur.notes = cur.notes ? `${cur.notes}\n${line}` : line;
+        map[s.employeeId] = cur;
+      }
+      return map;
+    },
+  });
+
+  // Apply pulled service charges to rows
+  useEffect(() => {
+    if (!serviceChargesByEmp || !employees) return;
+    setRows((prev) => {
+      const next = { ...prev };
+      let touched = 0;
+      for (const e of employees) {
+        const d = serviceChargesByEmp[e.id];
+        const r = next[e.id];
+        if (!r || !d) continue;
+        const mergedNotes = r.notes ? `${r.notes}\n${d.notes}` : d.notes;
+        next[e.id] = { ...r, serviceCharge: d.total, notes: mergedNotes };
+        touched++;
+      }
+      if (touched > 0) {
+        toast({
+          title: "Service charges pulled",
+          description: `Applied to ${touched} employee${touched === 1 ? "" : "s"}.`,
+        });
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceChargesByEmp, employees]);
+
   // Initialize rows whenever employees load
   useEffect(() => {
     if (!employees) return;
@@ -173,6 +234,7 @@ export default function PayrollCalculatorPage() {
           workedDays: stdDays,
           otHours: 0,
           otRate: 0,
+          serviceCharge: 0,
           deductions: 0,
           notes: "",
         };
