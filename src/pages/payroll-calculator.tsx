@@ -360,12 +360,18 @@ export default function PayrollCalculatorPage() {
           (merged.basic / Math.max(stdDays, 1)) * Math.min(merged.workedDays, stdDays),
         );
       }
+      // Recompute pension whenever basic / pct / enabled changes
+      if ("basic" in patch || "pensionPercentage" in patch || "pensionEnabled" in patch) {
+        merged.pension = merged.pensionEnabled
+          ? Math.round((merged.basic * (merged.pensionPercentage || 0)) / 100)
+          : 0;
+      }
       return { ...prev, [id]: merged };
     });
   };
 
   const computed = useMemo(() => {
-    const out: Record<string, { ot: number; gross: number; net: number }> = {};
+    const out: Record<string, { ot: number; gross: number; totalDed: number; net: number }> = {};
     for (const [id, r] of Object.entries(rows)) {
       const ot = Math.round((r.otHours || 0) * (r.otRate || 0));
       const gross =
@@ -377,14 +383,15 @@ export default function PayrollCalculatorPage() {
         (r.additionalService || 0) +
         (r.serviceCharge || 0) +
         ot;
-      const net = gross - (r.deductions || 0);
-      out[id] = { ot, gross, net };
+      const totalDed = (r.deductions || 0) + (r.pension || 0);
+      const net = gross - totalDed;
+      out[id] = { ot, gross, totalDed, net };
     }
     return out;
   }, [rows]);
 
   const totals = useMemo(() => {
-    let basic = 0, allowances = 0, ot = 0, gross = 0, ded = 0, net = 0, sc = 0;
+    let basic = 0, allowances = 0, ot = 0, gross = 0, ded = 0, net = 0, sc = 0, pension = 0;
     for (const [id, r] of Object.entries(rows)) {
       const c = computed[id];
       basic += r.earned;
@@ -393,9 +400,10 @@ export default function PayrollCalculatorPage() {
       ot += c?.ot ?? 0;
       gross += c?.gross ?? 0;
       ded += r.deductions;
+      pension += r.pension || 0;
       net += c?.net ?? 0;
     }
-    return { basic, allowances, sc, ot, gross, ded, net };
+    return { basic, allowances, sc, ot, gross, ded, pension, net };
   }, [rows, computed]);
 
 
