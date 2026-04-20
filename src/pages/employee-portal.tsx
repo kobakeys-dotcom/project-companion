@@ -40,6 +40,7 @@ import {
   ShieldAlert,
   MinusCircle,
   FileWarning,
+  Banknote,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -136,6 +137,16 @@ interface DeductionRow {
   id: string; deductionType: string; amount: number; currency: string;
   incidentDate: string; description: string; status: string;
   applyToPayrollMonth: string | null; evidenceUrl: string | null; evidenceName: string | null;
+}
+interface LoanRow {
+  id: string; amount: number; currency: string; recoveryMonths: number;
+  reason: string | null; status: string; startMonth: string | null;
+  deptApprovalStatus: string; mgmtApprovalStatus: string; adminApprovalStatus: string;
+  createdAt: string;
+}
+interface LoanRepaymentRow {
+  id: string; loanId: string; installmentNumber: number; month: string;
+  amount: number; status: string; paidAt: string | null;
 }
 interface DocumentRow {
   id: string; name: string; type: string; category: string;
@@ -646,8 +657,90 @@ function SubmitExpenseDialog({ employee, expenseTypes }: { employee: Employee; e
 }
 
 // ============================================================
-// Time Clock (clock in/out with optional GPS)
+// Loan request form
 // ============================================================
+const loanSchema = z.object({
+  amount: z.coerce.number().positive("Amount must be > 0").max(10_000_000),
+  recoveryMonths: z.coerce.number().int().min(1, "At least 1 month").max(120),
+  reason: z.string().max(500).optional(),
+});
+type LoanForm = z.infer<typeof loanSchema>;
+
+function RequestLoanDialog({ employee, currency }: { employee: Employee; currency: string }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const form = useForm<LoanForm>({
+    resolver: zodResolver(loanSchema),
+    defaultValues: { amount: 0, recoveryMonths: 12, reason: "" },
+  });
+
+  const submit = useMutation({
+    mutationFn: async (v: LoanForm) => {
+      const { error } = await sb.from("loans").insert({
+        companyId: employee.companyId,
+        employeeId: employee.id,
+        amount: v.amount,
+        currency,
+        recoveryMonths: v.recoveryMonths,
+        reason: v.reason || null,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast({ title: "Loan request submitted" });
+      qc.invalidateQueries({ queryKey: ["portal:loans"] });
+      form.reset();
+      setOpen(false);
+    },
+    onError: (e: Error) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
+  });
+
+  const amount = form.watch("amount");
+  const months = form.watch("recoveryMonths");
+  const monthly = amount > 0 && months > 0 ? amount / months : 0;
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm"><Plus className="h-4 w-4 mr-1" />Request Loan</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Request a Loan</DialogTitle>
+          <DialogDescription>Your request will be reviewed by department, management, and admin.</DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit((v) => submit.mutate(v))} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <FormField control={form.control} name="amount" render={({ field }) => (
+                <FormItem><FormLabel>Amount ({currency})</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="recoveryMonths" render={({ field }) => (
+                <FormItem><FormLabel>Recovery (months)</FormLabel><FormControl><Input type="number" min={1} max={120} {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            {monthly > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Estimated monthly repayment: <span className="font-semibold text-foreground">{fmtMoney(monthly, currency)}</span>
+              </p>
+            )}
+            <FormField control={form.control} name="reason" render={({ field }) => (
+              <FormItem><FormLabel>Reason (optional)</FormLabel><FormControl><Textarea {...field} maxLength={500} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={submit.isPending}>
+                {submit.isPending ? "Submitting…" : "Submit"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 interface TimeEntryRow {
   id: string;
   clockIn: string;
@@ -1115,6 +1208,26 @@ export default function EmployeePortal() {
     },
   });
 
+  const { data: loans = [] } = useQuery<LoanRow[]>({
+    queryKey: ["portal:loans", empId], enabled: !!empId,
+    queryFn: async () => {
+      const { data, error } = await sb.from("loans").select("*")
+        .eq("employeeId", empId).order("createdAt", { ascending: false });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as LoanRow[];
+    },
+  });
+
+  const { data: loanRepayments = [] } = useQuery<LoanRepaymentRow[]>({
+    queryKey: ["portal:loan-repayments", empId], enabled: !!empId,
+    queryFn: async () => {
+      const { data, error } = await sb.from("loan_repayments").select("*")
+        .eq("employeeId", empId).order("month", { ascending: true });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as LoanRepaymentRow[];
+    },
+  });
+
   const acknowledgeDisciplinary = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await sb.from("disciplinary_records")
@@ -1248,7 +1361,7 @@ export default function EmployeePortal() {
 
         {/* Tabs */}
         <Tabs defaultValue="time-clock" className="space-y-4">
-          <TabsList className="grid grid-cols-6 lg:grid-cols-11 w-full">
+          <TabsList className="grid grid-cols-6 lg:grid-cols-12 w-full">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="time-clock">Clock</TabsTrigger>
             <TabsTrigger value="time-off">Time Off</TabsTrigger>
@@ -1260,6 +1373,7 @@ export default function EmployeePortal() {
             <TabsTrigger value="service-charges">Tips</TabsTrigger>
             <TabsTrigger value="disciplinary">Discipline</TabsTrigger>
             <TabsTrigger value="deductions">Deductions</TabsTrigger>
+            <TabsTrigger value="loans">Loans</TabsTrigger>
           </TabsList>
 
           {/* ----- PROFILE ----- */}
@@ -1733,6 +1847,100 @@ export default function EmployeePortal() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* ----- LOANS ----- */}
+          <TabsContent value="loans">
+            <div className="space-y-4">
+              <Card>
+                <CardHeader className="flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardTitle>My Loans</CardTitle>
+                    <CardDescription>Request a loan and track approval status.</CardDescription>
+                  </div>
+                  <RequestLoanDialog employee={employee} currency={currency} />
+                </CardHeader>
+                <CardContent>
+                  {loans.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-8 text-center">No loan requests yet.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {loans.map((l) => {
+                        const lrs = loanRepayments.filter((r) => r.loanId === l.id);
+                        const paid = lrs.filter((r) => r.status === "paid").reduce((s, r) => s + Number(r.amount || 0), 0);
+                        const remaining = Math.max(0, Number(l.amount) - paid);
+                        const monthly = Number(l.amount) / Math.max(1, l.recoveryMonths);
+                        return (
+                          <div key={l.id} className="p-4 rounded-lg border space-y-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="font-semibold flex items-center gap-2">
+                                  <Banknote className="h-4 w-4" />
+                                  {fmtMoney(Number(l.amount), l.currency)}
+                                  <span className="text-xs font-normal text-muted-foreground">
+                                    over {l.recoveryMonths} months
+                                  </span>
+                                </p>
+                                {l.reason && <p className="text-sm text-muted-foreground mt-1">{l.reason}</p>}
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Requested {format(parseISO(l.createdAt), "MMM d, yyyy")}
+                                  {l.startMonth ? ` · Starts ${l.startMonth}` : ""}
+                                </p>
+                              </div>
+                              <StatusBadge status={l.status} />
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                              <div><p className="text-muted-foreground text-xs">Monthly</p><p className="font-medium">{fmtMoney(monthly, l.currency)}</p></div>
+                              <div><p className="text-muted-foreground text-xs">Paid</p><p className="font-medium">{fmtMoney(paid, l.currency)}</p></div>
+                              <div><p className="text-muted-foreground text-xs">Remaining</p><p className="font-medium">{fmtMoney(remaining, l.currency)}</p></div>
+                              <div><p className="text-muted-foreground text-xs">Installments</p><p className="font-medium">{lrs.filter((r) => r.status === "paid").length}/{l.recoveryMonths}</p></div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <div className="flex items-center justify-between p-2 rounded border">
+                                <span className="text-muted-foreground">Department</span><StatusBadge status={l.deptApprovalStatus} />
+                              </div>
+                              <div className="flex items-center justify-between p-2 rounded border">
+                                <span className="text-muted-foreground">Management</span><StatusBadge status={l.mgmtApprovalStatus} />
+                              </div>
+                              <div className="flex items-center justify-between p-2 rounded border">
+                                <span className="text-muted-foreground">Admin</span><StatusBadge status={l.adminApprovalStatus} />
+                              </div>
+                            </div>
+                            {lrs.length > 0 && (
+                              <div className="pt-2 border-t">
+                                <p className="text-xs font-medium text-muted-foreground mb-2">Repayment Schedule</p>
+                                <div className="overflow-x-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead className="h-8">#</TableHead>
+                                        <TableHead className="h-8">Month</TableHead>
+                                        <TableHead className="h-8 text-right">Amount</TableHead>
+                                        <TableHead className="h-8">Status</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {lrs.map((r) => (
+                                        <TableRow key={r.id}>
+                                          <TableCell className="py-1">{r.installmentNumber}</TableCell>
+                                          <TableCell className="py-1">{r.month}</TableCell>
+                                          <TableCell className="py-1 text-right font-mono">{fmtMoney(Number(r.amount), l.currency)}</TableCell>
+                                          <TableCell className="py-1"><StatusBadge status={r.status} /></TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
