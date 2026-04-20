@@ -85,7 +85,13 @@ interface Employee {
   basicSalary: number | null;
   projectId: string | null;
 }
-interface LeaveType { id: string; name: string; color: string | null; daysAllowed: number; }
+interface LeaveType {
+  id: string;
+  name: string;
+  color: string | null;
+  daysAllowed: number;
+  enforceEligibility?: boolean | null;
+}
 interface ExpenseType { id: string; name: string; color: string; }
 interface TimeOffRow {
   id: string; leaveTypeId: string | null; startDate: string; endDate: string;
@@ -192,11 +198,18 @@ function RequestTimeOffDialog({ employee, leaveTypes }: { employee: Employee; le
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const eligibility = computeLeaveEligibility((employee as any).startDate, (employee as any).createdAt);
-  const canRequest = eligibility?.isEligible === true && !eligibility.isExpired;
   const form = useForm<TimeOffForm>({
     resolver: zodResolver(timeOffSchema),
     defaultValues: { leaveTypeId: "", startDate: "", endDate: "", reason: "" },
   });
+
+  const selectedLeaveTypeId = form.watch("leaveTypeId");
+  const selectedLeaveType = useMemo(
+    () => leaveTypes.find((lt) => lt.id === selectedLeaveTypeId),
+    [leaveTypes, selectedLeaveTypeId],
+  );
+  const requiresEligibility = selectedLeaveType?.enforceEligibility ?? true;
+  const canRequestSelectedType = !requiresEligibility || (eligibility?.isEligible === true && !eligibility.isExpired);
 
   const submit = useMutation({
     mutationFn: async (v: TimeOffForm) => {
@@ -222,7 +235,7 @@ function RequestTimeOffDialog({ employee, leaveTypes }: { employee: Employee; le
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" disabled={!canRequest} title={!canRequest ? "Not eligible for leave right now" : undefined}>
+        <Button size="sm" disabled={leaveTypes.length === 0}>
           <Plus className="h-4 w-4 mr-1" />Request Leave
         </Button>
       </DialogTrigger>
@@ -244,11 +257,17 @@ function RequestTimeOffDialog({ employee, leaveTypes }: { employee: Employee; le
                     )}
                     {leaveTypes.map((lt) => (
                       <SelectItem key={lt.id} value={lt.id}>
-                        {lt.name} ({lt.daysAllowed} days/yr)
+                        {lt.name} ({lt.daysAllowed} days/yr){lt.enforceEligibility === false ? " · Anytime" : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {selectedLeaveType && !requiresEligibility && (
+                  <p className="text-sm text-muted-foreground">This leave type can be requested anytime.</p>
+                )}
+                {selectedLeaveType && requiresEligibility && !canRequestSelectedType && (
+                  <p className="text-sm text-destructive">This leave type follows the 2-year eligibility rule.</p>
+                )}
                 <FormMessage />
               </FormItem>
             )} />
@@ -265,7 +284,7 @@ function RequestTimeOffDialog({ employee, leaveTypes }: { employee: Employee; le
             )} />
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={submit.isPending}>
+              <Button type="submit" disabled={submit.isPending || !!selectedLeaveTypeId && !canRequestSelectedType}>
                 {submit.isPending ? "Submitting…" : "Submit"}
               </Button>
             </div>
@@ -275,6 +294,7 @@ function RequestTimeOffDialog({ employee, leaveTypes }: { employee: Employee; le
     </Dialog>
   );
 }
+
 
 // ============================================================
 // Expense submission form
