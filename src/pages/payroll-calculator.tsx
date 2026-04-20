@@ -535,6 +535,12 @@ export default function PayrollCalculatorPage() {
               Save Period
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Employees ({employees?.length ?? 0})</CardTitle>
           <CardDescription>
             Earned salary auto-prorates: <code className="px-1">basic × workedDays / stdDays</code>.
             All amounts are whole currency units.
