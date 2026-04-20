@@ -40,6 +40,7 @@ import {
   ShieldAlert,
   MinusCircle,
   FileWarning,
+  Banknote,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
