@@ -494,6 +494,7 @@ export default function PayrollCalculatorPage() {
                   <TableHead>Attendance</TableHead>
                   <TableHead>Living</TableHead>
                   <TableHead>Add. Service</TableHead>
+                  <TableHead>Service Charge</TableHead>
                   <TableHead>OT Hrs</TableHead>
                   <TableHead>OT Rate</TableHead>
                   <TableHead>OT Amt</TableHead>
