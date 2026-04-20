@@ -378,6 +378,7 @@ export default function PayrollCalculatorPage() {
           refetchAttendance(),
           refetchDeductions(),
           refetchServiceCharges(),
+          refetchLoanRepayments(),
         ]);
         if (cancelled) return;
         applyDeductions(d.data, { silent: true });
@@ -427,7 +428,7 @@ export default function PayrollCalculatorPage() {
         (r.additionalService || 0) +
         (r.serviceCharge || 0) +
         ot;
-      const totalDed = (r.deductions || 0) + (r.pension || 0);
+      const totalDed = (r.deductions || 0) + (r.pension || 0) + (r.loanRepayment || 0);
       const net = gross - totalDed;
       out[id] = { ot, gross, totalDed, net };
     }
@@ -435,7 +436,7 @@ export default function PayrollCalculatorPage() {
   }, [rows]);
 
   const totals = useMemo(() => {
-    let basic = 0, allowances = 0, ot = 0, gross = 0, ded = 0, net = 0, sc = 0, pension = 0;
+    let basic = 0, allowances = 0, ot = 0, gross = 0, ded = 0, net = 0, sc = 0, pension = 0, loan = 0;
     for (const [id, r] of Object.entries(rows)) {
       const c = computed[id];
       basic += r.earned;
@@ -445,9 +446,10 @@ export default function PayrollCalculatorPage() {
       gross += c?.gross ?? 0;
       ded += r.deductions;
       pension += r.pension || 0;
+      loan += r.loanRepayment || 0;
       net += c?.net ?? 0;
     }
-    return { basic, allowances, sc, ot, gross, ded, pension, net };
+    return { basic, allowances, sc, ot, gross, ded, pension, loan, net };
   }, [rows, computed]);
 
 
@@ -482,10 +484,13 @@ export default function PayrollCalculatorPage() {
           overtimeRate: Math.round(r.otRate) * 100,
           overtimeAmount: Math.round(c.ot) * 100,
           grossSalary: Math.round(c.gross) * 100,
-          deductions: Math.round((r.deductions || 0) + (r.pension || 0)) * 100,
+          deductions: Math.round((r.deductions || 0) + (r.pension || 0) + (r.loanRepayment || 0)) * 100,
           deductionNotes: [
             r.pension > 0
               ? `Pension (${r.pensionPercentage}% of basic): ${r.pension.toFixed(2)}`
+              : null,
+            r.loanRepayment > 0
+              ? `Loan repayment: ${r.loanRepayment.toFixed(2)}`
               : null,
             r.notes || null,
           ].filter(Boolean).join("\n") || null,
