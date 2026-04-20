@@ -438,8 +438,13 @@ export default function PayrollCalculatorPage() {
           overtimeRate: Math.round(r.otRate) * 100,
           overtimeAmount: Math.round(c.ot) * 100,
           grossSalary: Math.round(c.gross) * 100,
-          deductions: Math.round(r.deductions) * 100,
-          deductionNotes: r.notes || null,
+          deductions: Math.round((r.deductions || 0) + (r.pension || 0)) * 100,
+          deductionNotes: [
+            r.pension > 0
+              ? `Pension (${r.pensionPercentage}% of basic): ${r.pension.toFixed(2)}`
+              : null,
+            r.notes || null,
+          ].filter(Boolean).join("\n") || null,
           netPay: Math.round(c.net) * 100,
           payFrequency: "monthly",
         };
