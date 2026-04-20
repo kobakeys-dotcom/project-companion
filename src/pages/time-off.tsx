@@ -120,6 +120,7 @@ function LeaveTypeDialog({
       color: leaveType?.color || "#6366f1",
       requiresDeptApproval: leaveType?.requiresDeptApproval ?? true,
       requiresMgmtApproval: leaveType?.requiresMgmtApproval ?? true,
+      enforceEligibility: leaveType?.enforceEligibility ?? true,
       isActive: leaveType?.isActive ?? true,
     },
   });
@@ -259,6 +260,24 @@ function LeaveTypeDialog({
               </div>
               <FormControl>
                 <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="switch-mgmt-approval" />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="enforceEligibility"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <FormLabel>Enforce Eligibility (2-Year Cycle)</FormLabel>
+                <FormDescription className="text-xs">
+                  When ON, employees can only request this leave after 2 years from their joining date, with a 2-year cycle and 3-month expiry. Turn OFF for leaves like emergency or unpaid that can be taken anytime.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="switch-enforce-eligibility" />
               </FormControl>
             </FormItem>
           )}
