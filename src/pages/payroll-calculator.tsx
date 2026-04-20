@@ -472,12 +472,26 @@ export default function PayrollCalculatorPage() {
             </Button>
           </div>
           <div className="flex items-end">
-            <Button variant="outline" onClick={() => refetchDeductions()} className="w-full">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const { data } = await refetchDeductions();
+                applyDeductions(data);
+              }}
+              className="w-full"
+            >
               <RefreshCw className="h-4 w-4 mr-2" /> Pull Deductions
             </Button>
           </div>
           <div className="flex items-end">
-            <Button variant="outline" onClick={() => refetchServiceCharges()} className="w-full">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const { data } = await refetchServiceCharges();
+                applyServiceCharges(data);
+              }}
+              className="w-full"
+            >
               <RefreshCw className="h-4 w-4 mr-2" /> Pull Service Charges
             </Button>
           </div>
