@@ -39,6 +39,7 @@ type RowState = {
   workedDays: number;
   otHours: number;
   otRate: number;       // per hour, whole units
+  serviceCharge: number; // pulled from service_charge_shares
   deductions: number;
   notes: string;
 };
