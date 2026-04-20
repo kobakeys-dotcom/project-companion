@@ -77,11 +77,21 @@ const employeeFormSchema = z.object({
   employmentStatus: z.enum(["active", "on_leave", "resigned", "terminated"]),
   startDate: z.string().min(1, "Start date is required"),
   salary: z.number().optional(),
+  // Contract Details
+  lastPromotionDate: z.string().optional(),
+  contractType: z.string().optional(),
+  contractSignedDate: z.string().optional(),
+  contractExpiryDate: z.string().optional(),
+  // Personal Details
+  dateOfBirth: z.string().optional(),
+  permanentAddress: z.string().optional(),
   // Salary Package Breakdown
   basicSalary: z.number().optional(),
-  foodAllowance: z.number().optional(),
-  accommodationAllowance: z.number().optional(),
-  otherAllowance: z.number().optional(),
+  fixedAllowance: z.number().optional(),
+  dutyAllowance: z.number().optional(),
+  attendanceAllowance: z.number().optional(),
+  accommodationAllowance: z.number().optional(), // Living Allowance
+  additionalServiceAllowance: z.number().optional(),
   nationality: z.string().optional(),
   passportNumber: z.string().optional(),
   passportExpiryDate: z.string().optional(),
