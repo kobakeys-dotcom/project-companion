@@ -18,9 +18,11 @@ type EmployeeRow = {
   lastName: string;
   jobTitle: string;
   basicSalary: number | null;
-  foodAllowance: number | null;
-  accommodationAllowance: number | null;
-  otherAllowance: number | null;
+  fixedAllowance: number | null;
+  dutyAllowance: number | null;
+  attendanceAllowance: number | null;
+  accommodationAllowance: number | null; // used as Living Allowance
+  additionalServiceAllowance: number | null;
   companyId: string;
 };
 
@@ -28,9 +30,11 @@ type EmployeeRow = {
 // On save we convert to cents (×100) to match payroll_records storage.
 type RowState = {
   basic: number;
-  food: number;
-  accommodation: number;
-  other: number;
+  fixed: number;
+  duty: number;
+  attendance: number;
+  living: number;
+  additionalService: number;
   earned: number;       // proratable; defaults to basic
   workedDays: number;
   otHours: number;
@@ -67,7 +71,7 @@ export default function PayrollCalculatorPage() {
       const { data, error } = await supabase
         .from("employees")
         .select(
-          'id, firstName, lastName, jobTitle, basicSalary, foodAllowance, accommodationAllowance, otherAllowance, companyId',
+          'id, firstName, lastName, jobTitle, basicSalary, fixedAllowance, dutyAllowance, attendanceAllowance, accommodationAllowance, additionalServiceAllowance, companyId',
         )
         .eq("employmentStatus", "active")
         .order("firstName");
@@ -107,9 +111,11 @@ export default function PayrollCalculatorPage() {
         const basic = Math.round((e.basicSalary ?? 0) as number);
         next[e.id] = existing ?? {
           basic,
-          food: Math.round((e.foodAllowance ?? 0) as number),
-          accommodation: Math.round((e.accommodationAllowance ?? 0) as number),
-          other: Math.round((e.otherAllowance ?? 0) as number),
+          fixed: Math.round((e.fixedAllowance ?? 0) as number),
+          duty: Math.round((e.dutyAllowance ?? 0) as number),
+          attendance: Math.round((e.attendanceAllowance ?? 0) as number),
+          living: Math.round((e.accommodationAllowance ?? 0) as number),
+          additionalService: Math.round((e.additionalServiceAllowance ?? 0) as number),
           earned: basic,
           workedDays: stdDays,
           otHours: 0,
@@ -158,7 +164,14 @@ export default function PayrollCalculatorPage() {
     const out: Record<string, { ot: number; gross: number; net: number }> = {};
     for (const [id, r] of Object.entries(rows)) {
       const ot = Math.round((r.otHours || 0) * (r.otRate || 0));
-      const gross = (r.earned || 0) + (r.food || 0) + (r.accommodation || 0) + (r.other || 0) + ot;
+      const gross =
+        (r.earned || 0) +
+        (r.fixed || 0) +
+        (r.duty || 0) +
+        (r.attendance || 0) +
+        (r.living || 0) +
+        (r.additionalService || 0) +
+        ot;
       const net = gross - (r.deductions || 0);
       out[id] = { ot, gross, net };
     }
@@ -170,7 +183,7 @@ export default function PayrollCalculatorPage() {
     for (const [id, r] of Object.entries(rows)) {
       const c = computed[id];
       basic += r.earned;
-      allowances += r.food + r.accommodation + r.other;
+      allowances += r.fixed + r.duty + r.attendance + r.living + r.additionalService;
       ot += c?.ot ?? 0;
       gross += c?.gross ?? 0;
       ded += r.deductions;
@@ -200,9 +213,11 @@ export default function PayrollCalculatorPage() {
           month: monthLabel,
           baseSalary: Math.round(r.basic) * 100,
           earnedSalary: Math.round(r.earned) * 100,
-          foodAllowance: Math.round(r.food) * 100,
-          accommodationAllowance: Math.round(r.accommodation) * 100,
-          otherAllowance: Math.round(r.other) * 100,
+          fixedAllowance: Math.round(r.fixed) * 100,
+          dutyAllowance: Math.round(r.duty) * 100,
+          attendanceAllowance: Math.round(r.attendance) * 100,
+          livingAllowance: Math.round(r.living) * 100,
+          additionalServiceAllowance: Math.round(r.additionalService) * 100,
           overtimeHours: r.otHours,
           overtimeRate: Math.round(r.otRate) * 100,
           overtimeAmount: Math.round(c.ot) * 100,
@@ -345,9 +360,11 @@ export default function PayrollCalculatorPage() {
                   <TableHead>Basic</TableHead>
                   <TableHead>Worked</TableHead>
                   <TableHead>Earned</TableHead>
-                  <TableHead>Food</TableHead>
-                  <TableHead>Accom.</TableHead>
-                  <TableHead>Other</TableHead>
+                  <TableHead>Fixed</TableHead>
+                  <TableHead>Duty</TableHead>
+                  <TableHead>Attendance</TableHead>
+                  <TableHead>Living</TableHead>
+                  <TableHead>Add. Service</TableHead>
                   <TableHead>OT Hrs</TableHead>
                   <TableHead>OT Rate</TableHead>
                   <TableHead>OT Amt</TableHead>
@@ -371,9 +388,11 @@ export default function PayrollCalculatorPage() {
                       <TableCell>{numInput(r.basic, (n) => updateRow(e.id, { basic: n }))}</TableCell>
                       <TableCell>{numInput(r.workedDays, (n) => updateRow(e.id, { workedDays: n }), "w-16")}</TableCell>
                       <TableCell>{numInput(r.earned, (n) => updateRow(e.id, { earned: n }))}</TableCell>
-                      <TableCell>{numInput(r.food, (n) => updateRow(e.id, { food: n }))}</TableCell>
-                      <TableCell>{numInput(r.accommodation, (n) => updateRow(e.id, { accommodation: n }))}</TableCell>
-                      <TableCell>{numInput(r.other, (n) => updateRow(e.id, { other: n }))}</TableCell>
+                      <TableCell>{numInput(r.fixed, (n) => updateRow(e.id, { fixed: n }))}</TableCell>
+                      <TableCell>{numInput(r.duty, (n) => updateRow(e.id, { duty: n }))}</TableCell>
+                      <TableCell>{numInput(r.attendance, (n) => updateRow(e.id, { attendance: n }))}</TableCell>
+                      <TableCell>{numInput(r.living, (n) => updateRow(e.id, { living: n }))}</TableCell>
+                      <TableCell>{numInput(r.additionalService, (n) => updateRow(e.id, { additionalService: n }))}</TableCell>
                       <TableCell>{numInput(r.otHours, (n) => updateRow(e.id, { otHours: n }), "w-16")}</TableCell>
                       <TableCell>{numInput(r.otRate, (n) => updateRow(e.id, { otRate: n }), "w-20")}</TableCell>
                       <TableCell className="font-mono text-sm">{fmt(c.ot)}</TableCell>
@@ -395,7 +414,7 @@ export default function PayrollCalculatorPage() {
                   <TableCell />
                   <TableCell />
                   <TableCell>{fmt(totals.basic)}</TableCell>
-                  <TableCell colSpan={3}>{fmt(totals.allowances)} (allowances)</TableCell>
+                  <TableCell colSpan={5}>{fmt(totals.allowances)} (allowances)</TableCell>
                   <TableCell />
                   <TableCell />
                   <TableCell>{fmt(totals.ot)}</TableCell>
