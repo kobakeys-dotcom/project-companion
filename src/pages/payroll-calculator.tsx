@@ -313,7 +313,9 @@ export default function PayrollCalculatorPage() {
   // Auto-pull all records (attendance, deductions, service charges) when
   // employees + rows are ready, and re-pull whenever the pay period changes.
   useEffect(() => {
-    if (!employees?.length || Object.keys(rows).length === 0) return;
+    const rowsReady = employees?.length && Object.keys(rows).length === employees.length;
+    if (!rowsReady) return;
+
     let cancelled = false;
     (async () => {
       try {
@@ -329,9 +331,12 @@ export default function PayrollCalculatorPage() {
         /* silent */
       }
     })();
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [employees?.length, periodStart, periodEnd]);
+  }, [employees?.length, Object.keys(rows).length, periodStart, periodEnd]);
 
   const updateRow = (id: string, patch: Partial<RowState>) => {
     setRows((prev) => {
