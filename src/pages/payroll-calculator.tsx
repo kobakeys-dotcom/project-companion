@@ -39,6 +39,7 @@ type RowState = {
   workedDays: number;
   otHours: number;
   otRate: number;       // per hour, whole units
+  serviceCharge: number; // pulled from service_charge_shares
   deductions: number;
   notes: string;
 };
@@ -153,6 +154,67 @@ export default function PayrollCalculatorPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deductionsByEmp, employees]);
 
+  // Paid service charge shares whose pool period overlaps payroll period
+  const { data: serviceChargesByEmp, refetch: refetchServiceCharges } = useQuery<
+    Record<string, { total: number; notes: string }>
+  >({
+    queryKey: ["calc-service-charges", periodStart, periodEnd],
+    queryFn: async () => {
+      const { data: pools, error: pErr } = await (supabase as any)
+        .from("service_charge_pools")
+        .select("id, outletName, periodStart, periodEnd")
+        .lte("periodStart", periodEnd)
+        .gte("periodEnd", periodStart);
+      if (pErr) throw pErr;
+      const poolIds = (pools ?? []).map((p: any) => p.id);
+      if (poolIds.length === 0) return {};
+      const poolMap: Record<string, string> = Object.fromEntries(
+        (pools ?? []).map((p: any) => [p.id, p.outletName]),
+      );
+      const { data: shares, error: sErr } = await (supabase as any)
+        .from("service_charge_shares")
+        .select("employeeId, poolId, shareAmount, payoutStatus")
+        .in("poolId", poolIds);
+      if (sErr) throw sErr;
+      const map: Record<string, { total: number; notes: string }> = {};
+      for (const s of (shares ?? []) as Array<{
+        employeeId: string; poolId: string; shareAmount: number; payoutStatus: string;
+      }>) {
+        const cur = map[s.employeeId] ?? { total: 0, notes: "" };
+        cur.total += Number(s.shareAmount) || 0;
+        const line = `Service charge (${poolMap[s.poolId] ?? "pool"}): ${Number(s.shareAmount).toFixed(2)}`;
+        cur.notes = cur.notes ? `${cur.notes}\n${line}` : line;
+        map[s.employeeId] = cur;
+      }
+      return map;
+    },
+  });
+
+  // Apply pulled service charges to rows
+  useEffect(() => {
+    if (!serviceChargesByEmp || !employees) return;
+    setRows((prev) => {
+      const next = { ...prev };
+      let touched = 0;
+      for (const e of employees) {
+        const d = serviceChargesByEmp[e.id];
+        const r = next[e.id];
+        if (!r || !d) continue;
+        const mergedNotes = r.notes ? `${r.notes}\n${d.notes}` : d.notes;
+        next[e.id] = { ...r, serviceCharge: d.total, notes: mergedNotes };
+        touched++;
+      }
+      if (touched > 0) {
+        toast({
+          title: "Service charges pulled",
+          description: `Applied to ${touched} employee${touched === 1 ? "" : "s"}.`,
+        });
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceChargesByEmp, employees]);
+
   // Initialize rows whenever employees load
   useEffect(() => {
     if (!employees) return;
@@ -172,6 +234,7 @@ export default function PayrollCalculatorPage() {
           workedDays: stdDays,
           otHours: 0,
           otRate: 0,
+          serviceCharge: 0,
           deductions: 0,
           notes: "",
         };
@@ -223,6 +286,7 @@ export default function PayrollCalculatorPage() {
         (r.attendance || 0) +
         (r.living || 0) +
         (r.additionalService || 0) +
+        (r.serviceCharge || 0) +
         ot;
       const net = gross - (r.deductions || 0);
       out[id] = { ot, gross, net };
@@ -231,18 +295,21 @@ export default function PayrollCalculatorPage() {
   }, [rows]);
 
   const totals = useMemo(() => {
-    let basic = 0, allowances = 0, ot = 0, gross = 0, ded = 0, net = 0;
+    let basic = 0, allowances = 0, ot = 0, gross = 0, ded = 0, net = 0, sc = 0;
     for (const [id, r] of Object.entries(rows)) {
       const c = computed[id];
       basic += r.earned;
       allowances += r.fixed + r.duty + r.attendance + r.living + r.additionalService;
+      sc += r.serviceCharge;
       ot += c?.ot ?? 0;
       gross += c?.gross ?? 0;
       ded += r.deductions;
       net += c?.net ?? 0;
     }
-    return { basic, allowances, ot, gross, ded, net };
+    return { basic, allowances, sc, ot, gross, ded, net };
   }, [rows, computed]);
+
+
 
   const saveAll = useMutation({
     mutationFn: async () => {
@@ -269,7 +336,7 @@ export default function PayrollCalculatorPage() {
           dutyAllowance: Math.round(r.duty) * 100,
           attendanceAllowance: Math.round(r.attendance) * 100,
           livingAllowance: Math.round(r.living) * 100,
-          additionalServiceAllowance: Math.round(r.additionalService) * 100,
+          additionalServiceAllowance: (Math.round(r.additionalService) + Math.round(r.serviceCharge)) * 100,
           overtimeHours: r.otHours,
           overtimeRate: Math.round(r.otRate) * 100,
           overtimeAmount: Math.round(c.ot) * 100,
@@ -393,6 +460,11 @@ export default function PayrollCalculatorPage() {
               <RefreshCw className="h-4 w-4 mr-2" /> Pull Deductions
             </Button>
           </div>
+          <div className="flex items-end">
+            <Button variant="outline" onClick={() => refetchServiceCharges()} className="w-full">
+              <RefreshCw className="h-4 w-4 mr-2" /> Pull Service Charges
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -422,6 +494,7 @@ export default function PayrollCalculatorPage() {
                   <TableHead>Attendance</TableHead>
                   <TableHead>Living</TableHead>
                   <TableHead>Add. Service</TableHead>
+                  <TableHead>Service Charge</TableHead>
                   <TableHead>OT Hrs</TableHead>
                   <TableHead>OT Rate</TableHead>
                   <TableHead>OT Amt</TableHead>
@@ -450,6 +523,7 @@ export default function PayrollCalculatorPage() {
                       <TableCell>{numInput(r.attendance, (n) => updateRow(e.id, { attendance: n }))}</TableCell>
                       <TableCell>{numInput(r.living, (n) => updateRow(e.id, { living: n }))}</TableCell>
                       <TableCell>{numInput(r.additionalService, (n) => updateRow(e.id, { additionalService: n }))}</TableCell>
+                      <TableCell>{numInput(r.serviceCharge, (n) => updateRow(e.id, { serviceCharge: n }))}</TableCell>
                       <TableCell>{numInput(r.otHours, (n) => updateRow(e.id, { otHours: n }), "w-16")}</TableCell>
                       <TableCell>{numInput(r.otRate, (n) => updateRow(e.id, { otRate: n }), "w-20")}</TableCell>
                       <TableCell className="font-mono text-sm">{fmt(c.ot)}</TableCell>
@@ -472,6 +546,7 @@ export default function PayrollCalculatorPage() {
                   <TableCell />
                   <TableCell>{fmt(totals.basic)}</TableCell>
                   <TableCell colSpan={5}>{fmt(totals.allowances)} (allowances)</TableCell>
+                  <TableCell>{fmt(totals.sc)}</TableCell>
                   <TableCell />
                   <TableCell />
                   <TableCell>{fmt(totals.ot)}</TableCell>
