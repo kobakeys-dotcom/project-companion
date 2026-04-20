@@ -226,16 +226,16 @@ export default function PayrollCalculatorPage() {
   ) => {
     const m = map ?? {};
     const matchedIds = Object.keys(m);
-    let touched = 0;
+    const employeeIds = new Set((employees ?? []).map((e) => e.id));
+    const applicableIds = matchedIds.filter((id) => employeeIds.has(id));
     setRows((prev) => {
       const next = { ...prev };
-      for (const id of matchedIds) {
+      for (const id of applicableIds) {
         const d = m[id];
         const r = next[id];
         if (!r) continue;
         const mergedNotes = r.notes ? `${r.notes}\n${d.notes}` : d.notes;
         next[id] = { ...r, serviceCharge: d.total, notes: mergedNotes };
-        touched++;
       }
       return next;
     });
@@ -245,15 +245,15 @@ export default function PayrollCalculatorPage() {
         title: "No service charges found",
         description: `No service charge shares for pools overlapping ${periodStart} – ${periodEnd}.`,
       });
-    } else if (touched === 0) {
+    } else if (applicableIds.length === 0) {
       toast({
-        title: "Employees not in this payroll",
-        description: `Found ${matchedIds.length} share${matchedIds.length === 1 ? "" : "s"}, but those employees are not loaded yet. Try again in a moment.`,
+        title: "Service charges skipped",
+        description: `Found ${matchedIds.length} share${matchedIds.length === 1 ? "" : "s"}, but those employees aren't in this payroll (inactive or different company).`,
       });
     } else {
       toast({
         title: "Service charges pulled",
-        description: `Applied to ${touched} employee${touched === 1 ? "" : "s"}.`,
+        description: `Applied to ${applicableIds.length} employee${applicableIds.length === 1 ? "" : "s"}.`,
       });
     }
   };
