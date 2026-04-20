@@ -1790,6 +1790,13 @@ export type Database = {
       }
       email_for_employee_code: { Args: { _code: string }; Returns: string }
       expire_untaken_leave: { Args: never; Returns: undefined }
+      get_time_off_tokens: {
+        Args: { _request_id: string }
+        Returns: {
+          dept_token: string
+          mgmt_token: string
+        }[]
+      }
       get_user_company: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
