@@ -308,18 +308,8 @@ export default function PayrollCalculatorPage() {
     }
     return { basic, allowances, sc, ot, gross, ded, net };
   }, [rows, computed]);
-    let basic = 0, allowances = 0, ot = 0, gross = 0, ded = 0, net = 0;
-    for (const [id, r] of Object.entries(rows)) {
-      const c = computed[id];
-      basic += r.earned;
-      allowances += r.fixed + r.duty + r.attendance + r.living + r.additionalService;
-      ot += c?.ot ?? 0;
-      gross += c?.gross ?? 0;
-      ded += r.deductions;
-      net += c?.net ?? 0;
-    }
-    return { basic, allowances, ot, gross, ded, net };
-  }, [rows, computed]);
+
+
 
   const saveAll = useMutation({
     mutationFn: async () => {
