@@ -111,8 +111,8 @@ export default function PayrollCalculatorPage() {
     },
   });
 
-  // Approved/deducted deductions for this payroll month (YYYY-MM derived from periodStart)
-  const payrollMonthKey = periodStart.slice(0, 7);
+  // Approved/deducted deductions for the payroll month (YYYY-MM derived from period end)
+  const payrollMonthKey = periodEnd.slice(0, 7);
   const { data: deductionsByEmp, refetch: refetchDeductions } = useQuery<
     Record<string, { total: number; notes: string }>
   >({
