@@ -1786,6 +1786,7 @@ export type Database = {
         }[]
       }
       email_for_employee_code: { Args: { _code: string }; Returns: string }
+      expire_untaken_leave: { Args: never; Returns: undefined }
       get_user_company: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -1796,6 +1797,20 @@ export type Database = {
       }
       is_company_manager: { Args: { _company_id: string }; Returns: boolean }
       is_company_member: { Args: { _company_id: string }; Returns: boolean }
+      leave_eligibility: {
+        Args: { _employee_id: string }
+        Returns: {
+          anchorDate: string
+          cycleNumber: number
+          eligibleFrom: string
+          employeeId: string
+          expiryDate: string
+          isEligible: boolean
+          isExpired: boolean
+          windowEnd: string
+          windowStart: string
+        }[]
+      }
       list_employees_directory: {
         Args: never
         Returns: {

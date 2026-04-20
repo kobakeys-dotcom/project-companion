@@ -57,6 +57,8 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import { LeaveEligibilityBanner } from "@/components/leave-eligibility-banner";
+import { computeLeaveEligibility } from "@/lib/leave-eligibility";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
@@ -189,6 +191,8 @@ function RequestTimeOffDialog({ employee, leaveTypes }: { employee: Employee; le
   const { toast } = useToast();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const eligibility = computeLeaveEligibility((employee as any).startDate, (employee as any).createdAt);
+  const canRequest = eligibility?.isEligible === true && !eligibility.isExpired;
   const form = useForm<TimeOffForm>({
     resolver: zodResolver(timeOffSchema),
     defaultValues: { leaveTypeId: "", startDate: "", endDate: "", reason: "" },
@@ -218,7 +222,9 @@ function RequestTimeOffDialog({ employee, leaveTypes }: { employee: Employee; le
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm"><Plus className="h-4 w-4 mr-1" />Request Leave</Button>
+        <Button size="sm" disabled={!canRequest} title={!canRequest ? "Not eligible for leave right now" : undefined}>
+          <Plus className="h-4 w-4 mr-1" />Request Leave
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -1021,7 +1027,11 @@ export default function EmployeePortal() {
           </TabsContent>
 
           {/* ----- TIME OFF ----- */}
-          <TabsContent value="time-off">
+          <TabsContent value="time-off" className="space-y-4">
+            <LeaveEligibilityBanner
+              startDate={(employee as any)?.startDate}
+              createdAt={(employee as any)?.createdAt}
+            />
             <Card>
               <CardHeader className="flex-row items-center justify-between space-y-0">
                 <div>
