@@ -479,7 +479,7 @@ export default function PayrollCalculatorPage() {
           <CardTitle className="text-base">Pay Period</CardTitle>
           <CardDescription className="text-xs">Set the period and pull worked days from attendance.</CardDescription>
         </CardHeader>
-        <CardContent className="pb-3 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+        <CardContent className="pb-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
           <div>
             <Label className="text-xs">Month</Label>
             <Input className="h-8 text-sm" value={monthLabel} onChange={(e) => setMonthLabel(e.target.value)} />
