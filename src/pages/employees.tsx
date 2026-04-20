@@ -716,6 +716,12 @@ function AddEmployeeDialog({ departments, projects, accommodations }: { departme
       uniformIssuedDate: "",
       safetyShoeSize: "",
       safetyShoeIssuedDate: "",
+      lastPromotionDate: "",
+      contractType: "",
+      contractSignedDate: "",
+      contractExpiryDate: "",
+      dateOfBirth: "",
+      permanentAddress: "",
     },
   });
 
