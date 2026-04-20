@@ -69,6 +69,7 @@ const leaveTypeFormSchema = z.object({
   color: z.string().default("#6366f1"),
   requiresDeptApproval: z.boolean().default(true),
   requiresMgmtApproval: z.boolean().default(true),
+  enforceEligibility: z.boolean().default(true),
   isActive: z.boolean().default(true),
 });
 
