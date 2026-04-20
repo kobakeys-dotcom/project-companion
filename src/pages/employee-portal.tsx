@@ -138,6 +138,16 @@ interface DeductionRow {
   incidentDate: string; description: string; status: string;
   applyToPayrollMonth: string | null; evidenceUrl: string | null; evidenceName: string | null;
 }
+interface LoanRow {
+  id: string; amount: number; currency: string; recoveryMonths: number;
+  reason: string | null; status: string; startMonth: string | null;
+  deptApprovalStatus: string; mgmtApprovalStatus: string; adminApprovalStatus: string;
+  createdAt: string;
+}
+interface LoanRepaymentRow {
+  id: string; loanId: string; installmentNumber: number; month: string;
+  amount: number; status: string; paidAt: string | null;
+}
 interface DocumentRow {
   id: string; name: string; type: string; category: string;
   fileUrl: string | null; fileSize: number | null; isCompanyWide: boolean;
