@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeaveTracker } from "@/components/leave-tracker";
 import { LeaveEligibilityBanner } from "@/components/leave-eligibility-banner";
+import { computeLeaveEligibility } from "@/lib/leave-eligibility";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
@@ -1058,26 +1059,72 @@ export default function TimeOffPage() {
             <CardHeader>
               <CardTitle className="text-base">Leave Eligibility per Employee</CardTitle>
               <CardDescription>
-                Employees become eligible 2 years after their joining date. Each window lasts 2 years and any
-                unused balance expires 3 months after it ends.
+                Employees become eligible 2 years after their joining date. Unused balance expires 3 months
+                after the eligibility date.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2 max-h-[60vh] overflow-y-auto">
+            <CardContent className="overflow-x-auto">
               {(employees ?? []).length === 0 ? (
                 <p className="text-sm text-muted-foreground">No employees yet.</p>
               ) : (
-                (employees ?? []).map((emp: any) => (
-                  <div key={emp.id} className="flex items-center justify-between gap-3 p-2 rounded-md border">
-                    <div className="text-sm font-medium truncate">
-                      {emp.firstName} {emp.lastName}
-                    </div>
-                    <LeaveEligibilityBanner
-                      startDate={emp.startDate}
-                      createdAt={emp.createdAt}
-                      variant="compact"
-                    />
-                  </div>
-                ))
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2 font-medium sticky left-0 bg-background">Employee</th>
+                      {((leaveTypes ?? []) as any[]).map((lt) => (
+                        <th key={lt.id} className="text-left p-2 font-medium whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="inline-block h-2 w-2 rounded-full"
+                              style={{ backgroundColor: lt.color || "hsl(var(--primary))" }}
+                            />
+                            {lt.name}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {((employees ?? []) as any[]).map((emp) => {
+                      const elig = computeLeaveEligibility(emp.startDate, emp.createdAt);
+                      return (
+                        <tr key={emp.id} className="border-b hover:bg-muted/40">
+                          <td className="p-2 font-medium whitespace-nowrap sticky left-0 bg-background">
+                            {emp.firstName} {emp.lastName}
+                          </td>
+                          {((leaveTypes ?? []) as any[]).map((lt) => {
+                            if (!lt.enforceEligibility) {
+                              return (
+                                <td key={lt.id} className="p-2">
+                                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                    Always eligible
+                                  </Badge>
+                                </td>
+                              );
+                            }
+                            if (!elig) {
+                              return (
+                                <td key={lt.id} className="p-2 text-xs text-muted-foreground">
+                                  No joining date
+                                </td>
+                              );
+                            }
+                            const status = !elig.isEligible
+                              ? { label: `Eligible ${format(elig.eligibleFrom, "MMM d, yyyy")}`, tone: "bg-amber-500/10 text-amber-700 dark:text-amber-400" }
+                              : elig.isExpired
+                              ? { label: `Expired ${format(elig.expiryDate, "MMM d, yyyy")}`, tone: "bg-red-500/10 text-red-600 dark:text-red-400" }
+                              : { label: `Expires ${format(elig.expiryDate, "MMM d, yyyy")}`, tone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" };
+                            return (
+                              <td key={lt.id} className="p-2 whitespace-nowrap">
+                                <Badge className={status.tone}>{status.label}</Badge>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               )}
             </CardContent>
           </Card>
