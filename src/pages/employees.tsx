@@ -92,6 +92,8 @@ const employeeFormSchema = z.object({
   attendanceAllowance: z.number().optional(),
   accommodationAllowance: z.number().optional(), // Living Allowance
   additionalServiceAllowance: z.number().optional(),
+  pensionEnabled: z.boolean().optional(),
+  pensionPercentage: z.number().optional(),
   nationality: z.string().optional(),
   passportNumber: z.string().optional(),
   passportExpiryDate: z.string().optional(),
@@ -172,6 +174,8 @@ function EditEmployeeDialog({
       attendanceAllowance: (employee as any).attendanceAllowance || undefined,
       accommodationAllowance: employee.accommodationAllowance || undefined,
       additionalServiceAllowance: (employee as any).additionalServiceAllowance || undefined,
+      pensionEnabled: (employee as any).pensionEnabled ?? false,
+      pensionPercentage: (employee as any).pensionPercentage ?? 0,
       nationality: employee.nationality || "",
       passportNumber: employee.passportNumber || "",
       passportExpiryDate: employee.passportExpiryDate || "",
