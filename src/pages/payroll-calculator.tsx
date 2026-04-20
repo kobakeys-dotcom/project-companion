@@ -60,11 +60,20 @@ const lastOfMonth = () => {
 export default function PayrollCalculatorPage() {
   const { toast } = useToast();
 
-  const [periodStart, setPeriodStart] = useState(firstOfMonth());
-  const [periodEnd, setPeriodEnd] = useState(lastOfMonth());
-  const [monthLabel, setMonthLabel] = useState(todayMonthLabel());
-  const [stdDays, setStdDays] = useState(26);
+  const SAVED_KEY = "payroll-calc-period";
+  const saved = (() => {
+    try { return JSON.parse(localStorage.getItem(SAVED_KEY) || "null"); } catch { return null; }
+  })();
+  const [periodStart, setPeriodStart] = useState<string>(saved?.periodStart ?? firstOfMonth());
+  const [periodEnd, setPeriodEnd] = useState<string>(saved?.periodEnd ?? lastOfMonth());
+  const [monthLabel, setMonthLabel] = useState<string>(saved?.monthLabel ?? todayMonthLabel());
+  const [stdDays, setStdDays] = useState<number>(saved?.stdDays ?? 26);
   const [rows, setRows] = useState<Record<string, RowState>>({});
+
+  const savePeriod = () => {
+    localStorage.setItem(SAVED_KEY, JSON.stringify({ periodStart, periodEnd, monthLabel, stdDays }));
+    toast({ title: "Pay period saved", description: `${monthLabel} (${periodStart} – ${periodEnd}) will be remembered.` });
+  };
 
   const { data: employees, isLoading } = useQuery<EmployeeRow[]>({
     queryKey: ["calc-employees"],
@@ -519,6 +528,11 @@ export default function PayrollCalculatorPage() {
               className="w-full"
             >
               <RefreshCw className="h-4 w-4 mr-2" /> Pull Service Charges
+            </Button>
+          </div>
+          <div className="flex items-end">
+            <Button onClick={savePeriod} className="w-full">
+              Save Period
             </Button>
           </div>
         </CardContent>
