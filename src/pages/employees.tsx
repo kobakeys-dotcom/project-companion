@@ -743,6 +743,8 @@ function AddEmployeeDialog({ departments, projects, accommodations }: { departme
       employmentType: "full_time",
       employmentStatus: "active",
       startDate: new Date().toISOString().split("T")[0],
+      pensionEnabled: false,
+      pensionPercentage: 0,
       nationality: "",
       passportNumber: "",
       passportExpiryDate: "",
