@@ -228,6 +228,7 @@ function LoanCard({ loan, employee, repayments, refresh }: {
 }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [startMonth, setStartMonth] = useState(loan.startMonth ?? new Date().toISOString().slice(0, 7));
   const [recoveryMonths, setRecoveryMonths] = useState(loan.recoveryMonths);
 
@@ -236,7 +237,6 @@ function LoanCard({ loan, employee, repayments, refresh }: {
       const updates: any = { adminApprovalStatus: action === "approve" ? "approved" : "rejected" };
       if (action === "reject") updates.status = "rejected";
       else {
-        // If dept+mgmt are both approved, mark loan approved
         if (loan.deptApprovalStatus === "approved" && loan.mgmtApprovalStatus === "approved") {
           updates.status = "approved";
           updates.startMonth = startMonth;
@@ -256,7 +256,6 @@ function LoanCard({ loan, employee, repayments, refresh }: {
       const updates: any = { startMonth, recoveryMonths };
       const { error } = await sb.from("loans").update(updates).eq("id", loan.id);
       if (error) throw error;
-      // Regenerate via RPC
       const { error: e2 } = await sb.rpc("generate_loan_schedule", { _loan_id: loan.id });
       if (e2) throw e2;
     },
@@ -276,20 +275,25 @@ function LoanCard({ loan, employee, repayments, refresh }: {
   const canAdminApprove = loan.deptApprovalStatus === "approved" && loan.mgmtApprovalStatus === "approved" &&
     loan.adminApprovalStatus === "pending" && loan.status !== "rejected";
 
+  const employeeName = employee ? `${employee.firstName} ${employee.lastName}` : "Unknown";
+  const totalPaid = repayments.filter(r => r.status === "paid").reduce((s, r) => s + Number(r.amount), 0);
+  const totalScheduled = repayments.reduce((s, r) => s + Number(r.amount), 0);
+
   return (
     <Card>
       <CardContent className="p-4 space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="font-semibold">
-              {employee ? `${employee.firstName} ${employee.lastName}` : "Unknown"}
-              <span className="text-muted-foreground font-normal text-sm"> · {employee?.jobTitle}</span>
-            </p>
-            <p className="text-2xl font-bold">{Number(loan.amount).toLocaleString()} {loan.currency}</p>
-            <p className="text-xs text-muted-foreground">
-              Over {loan.recoveryMonths} months · Requested {format(parseISO(loan.createdAt), "MMM d, yyyy")}
-            </p>
-            {loan.reason && <p className="text-sm italic text-muted-foreground mt-1">"{loan.reason}"</p>}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3 min-w-0">
+            <Wallet className="h-5 w-5 text-primary shrink-0" />
+            <div className="min-w-0">
+              <p className="font-semibold truncate">
+                {employeeName}
+                {employee?.jobTitle && <span className="text-muted-foreground font-normal text-sm"> · {employee.jobTitle}</span>}
+              </p>
+              <p className="text-lg font-bold">{Number(loan.amount).toLocaleString()} {loan.currency}
+                <span className="text-xs text-muted-foreground font-normal"> · {loan.recoveryMonths} mo · {format(parseISO(loan.createdAt), "MMM d, yyyy")}</span>
+              </p>
+            </div>
           </div>
           <StatusBadge status={loan.status} />
         </div>
@@ -316,7 +320,7 @@ function LoanCard({ loan, employee, repayments, refresh }: {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => adminApprove.mutate("approve")} disabled={adminApprove.isPending || !startMonth}>
+              <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => adminApprove.mutate("approve")} disabled={adminApprove.isPending || !startMonth}>
                 <CheckCircle2 className="h-4 w-4 mr-1" />Approve Loan
               </Button>
               <Button size="sm" variant="destructive" onClick={() => adminApprove.mutate("reject")} disabled={adminApprove.isPending}>
@@ -327,12 +331,20 @@ function LoanCard({ loan, employee, repayments, refresh }: {
         )}
 
         {isFinalApproved && (
-          <div className="border-t pt-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">Repayment schedule (start: {loan.startMonth})</p>
+          <Collapsible open={scheduleOpen} onOpenChange={setScheduleOpen} className="border-t pt-3">
+            <div className="flex items-center justify-between gap-2">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex-1 justify-start gap-2 -ml-2 h-auto py-1">
+                  {scheduleOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  <span className="text-sm font-medium">Repayment schedule</span>
+                  <span className="text-xs text-muted-foreground ml-auto truncate">
+                    Paid {totalPaid.toFixed(2)} / {totalScheduled.toFixed(2)} {loan.currency} · start {loan.startMonth}
+                  </span>
+                </Button>
+              </CollapsibleTrigger>
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline"><Edit className="h-3 w-3 mr-1" />Adjust schedule</Button>
+                  <Button size="sm" variant="outline"><Edit className="h-3 w-3 mr-1" />Adjust</Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
@@ -357,8 +369,10 @@ function LoanCard({ loan, employee, repayments, refresh }: {
                 </DialogContent>
               </Dialog>
             </div>
-            <RepaymentSchedule loan={loan} repayments={repayments} refresh={refresh} />
-          </div>
+            <CollapsibleContent className="pt-3">
+              <RepaymentSchedule loan={loan} repayments={repayments} refresh={refresh} />
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         {(loan.status === "pending" || loan.status === "dept_approved" || loan.status === "mgmt_approved") && (
