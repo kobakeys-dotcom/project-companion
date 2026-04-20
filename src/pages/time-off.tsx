@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeaveTracker } from "@/components/leave-tracker";
+import { LeaveEligibilityBanner } from "@/components/leave-eligibility-banner";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
@@ -1012,6 +1013,30 @@ export default function TimeOffPage() {
         </TabsList>
 
         <TabsContent value="tracker" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Leave Eligibility per Employee</CardTitle>
+              <CardDescription>2-year cycle from joining date · expires 3 months after each window.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 max-h-72 overflow-y-auto">
+              {(employees ?? []).length === 0 ? (
+                <p className="text-sm text-muted-foreground">No employees yet.</p>
+              ) : (
+                (employees ?? []).map((emp: any) => (
+                  <div key={emp.id} className="flex items-center justify-between gap-3 p-2 rounded-md border">
+                    <div className="text-sm font-medium truncate">
+                      {emp.firstName} {emp.lastName}
+                    </div>
+                    <LeaveEligibilityBanner
+                      startDate={emp.startDate}
+                      createdAt={emp.createdAt}
+                      variant="compact"
+                    />
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
           <LeaveTracker
             employees={(employees ?? []) as any}
             leaveTypes={(leaveTypes ?? []) as any}
