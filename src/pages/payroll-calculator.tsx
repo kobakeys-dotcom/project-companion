@@ -479,7 +479,7 @@ export default function PayrollCalculatorPage() {
           <CardTitle className="text-base">Pay Period</CardTitle>
           <CardDescription className="text-xs">Set the period and pull worked days from attendance.</CardDescription>
         </CardHeader>
-        <CardContent className="pb-3 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+        <CardContent className="pb-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
           <div>
             <Label className="text-xs">Month</Label>
             <Input className="h-8 text-sm" value={monthLabel} onChange={(e) => setMonthLabel(e.target.value)} />
@@ -503,34 +503,21 @@ export default function PayrollCalculatorPage() {
             />
           </div>
           <div className="flex items-end">
-            <Button size="sm" variant="outline" onClick={() => refetchAttendance()} className="w-full h-8 text-xs">
-              <RefreshCw className="h-3 w-3 mr-1" /> Pull Attendance
-            </Button>
-          </div>
-          <div className="flex items-end">
             <Button
               size="sm"
               variant="outline"
               onClick={async () => {
-                const { data } = await refetchDeductions();
-                applyDeductions(data);
+                const [a, d, s] = await Promise.all([
+                  refetchAttendance(),
+                  refetchDeductions(),
+                  refetchServiceCharges(),
+                ]);
+                applyDeductions(d.data);
+                applyServiceCharges(s.data);
               }}
               className="w-full h-8 text-xs"
             >
-              <RefreshCw className="h-3 w-3 mr-1" /> Pull Deductions
-            </Button>
-          </div>
-          <div className="flex items-end">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={async () => {
-                const { data } = await refetchServiceCharges();
-                applyServiceCharges(data);
-              }}
-              className="w-full h-8 text-xs"
-            >
-              <RefreshCw className="h-3 w-3 mr-1" /> Pull Service Charges
+              <RefreshCw className="h-3 w-3 mr-1" /> Pull All Records
             </Button>
           </div>
           <div className="flex items-end">
