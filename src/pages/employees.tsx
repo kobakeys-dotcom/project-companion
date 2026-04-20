@@ -461,6 +461,8 @@ function EditEmployeeDialog({
           <div className="border-t pt-4 mt-4">
             <h4 className="font-medium mb-3">Documents</h4>
             <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="passportNumber" render={({ field }) => (
+                <FormItem><FormLabel>Passport Number</FormLabel><FormControl><Input {...field} data-testid="input-edit-passport-number" /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="passportExpiryDate" render={({ field }) => (
                 <FormItem><FormLabel>Passport Expiry</FormLabel><FormControl><Input type="date" {...field} data-testid="input-edit-passport-expiry" /></FormControl><FormMessage /></FormItem>
