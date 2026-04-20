@@ -46,6 +46,8 @@ type RowState = {
   pensionEnabled: boolean;
   pensionPercentage: number;
   pension: number;       // computed: basic × pct%
+  loanRepayment: number; // pulled from loan_repayments for this month
+  loanNote: string;      // breakdown of which loans contributed
   notes: string;
 };
 
