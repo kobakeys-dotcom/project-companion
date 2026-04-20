@@ -32,6 +32,7 @@ import {
   UtensilsCrossed,
   ShieldAlert,
   MinusCircle,
+  Wallet,
 } from "lucide-react";
 import {
   Sidebar,
@@ -67,6 +68,7 @@ const menuItems = [
   { title: "Service Charges", url: "/service-charges", icon: UtensilsCrossed },
   { title: "Disciplinary", url: "/disciplinary", icon: ShieldAlert },
   { title: "Deductions", url: "/deductions", icon: MinusCircle },
+  { title: "Loans", url: "/loans", icon: Wallet },
   { title: "Departments", url: "/departments", icon: Building2 },
   { title: "Projects / Branches", url: "/projects", icon: FolderKanban },
   { title: "Accommodations", url: "/accommodations", icon: Home },

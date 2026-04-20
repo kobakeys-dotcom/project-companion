@@ -43,6 +43,8 @@ import EmployeePortalPage from "@/pages/employee-portal";
 import SuperAdminLoginPage from "@/pages/super-admin-login";
 import SuperAdminDashboardPage from "@/pages/super-admin-dashboard";
 import { DeptApprovalPage, MgmtApprovalPage } from "@/pages/approval";
+import { LoanDeptApprovalPage, LoanMgmtApprovalPage } from "@/pages/loan-approval";
+import LoansPage from "@/pages/loans";
 import PricingPage from "@/pages/pricing";
 import SubscriptionSuccessPage from "@/pages/subscription-success";
 import SubscriptionCancelPage from "@/pages/subscription-cancel";
@@ -126,6 +128,8 @@ const App = () => (
             <Route path="/super-admin" element={<SuperAdminDashboardPage />} />
             <Route path="/approve/dept/:id" element={<DeptApprovalPage />} />
             <Route path="/approve/mgmt/:id" element={<MgmtApprovalPage />} />
+            <Route path="/approve/loan/dept/:id" element={<LoanDeptApprovalPage />} />
+            <Route path="/approve/loan/mgmt/:id" element={<LoanMgmtApprovalPage />} />
             <Route path="/careers" element={<CareersPage />} />
 
             {/* Protected app routes */}
@@ -161,6 +165,7 @@ const App = () => (
             <Route path="/service-charges" element={<ProtectedShell><ServiceChargesPage /></ProtectedShell>} />
             <Route path="/disciplinary" element={<ProtectedShell><DisciplinaryPage /></ProtectedShell>} />
             <Route path="/deductions" element={<ProtectedShell><DeductionsPage /></ProtectedShell>} />
+            <Route path="/loans" element={<ProtectedShell><LoansPage /></ProtectedShell>} />
             <Route path="/pricing" element={<ProtectedShell><PricingPage /></ProtectedShell>} />
             <Route path="/subscription/success" element={<ProtectedShell><SubscriptionSuccessPage /></ProtectedShell>} />
             <Route path="/subscription/cancel" element={<ProtectedShell><SubscriptionCancelPage /></ProtectedShell>} />
