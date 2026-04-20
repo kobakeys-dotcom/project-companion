@@ -1126,7 +1126,25 @@ export default function EmployeePortal() {
     },
   });
 
-  const acknowledgeDisciplinary = useMutation({
+  const { data: loans = [] } = useQuery<LoanRow[]>({
+    queryKey: ["portal:loans", empId], enabled: !!empId,
+    queryFn: async () => {
+      const { data, error } = await sb.from("loans").select("*")
+        .eq("employeeId", empId).order("createdAt", { ascending: false });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as LoanRow[];
+    },
+  });
+
+  const { data: loanRepayments = [] } = useQuery<LoanRepaymentRow[]>({
+    queryKey: ["portal:loan-repayments", empId], enabled: !!empId,
+    queryFn: async () => {
+      const { data, error } = await sb.from("loan_repayments").select("*")
+        .eq("employeeId", empId).order("month", { ascending: true });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as LoanRepaymentRow[];
+    },
+  });
     mutationFn: async (id: string) => {
       const { error } = await sb.from("disciplinary_records")
         .update({ status: "acknowledged", acknowledgedAt: new Date().toISOString() }).eq("id", id);
@@ -1259,7 +1277,7 @@ export default function EmployeePortal() {
 
         {/* Tabs */}
         <Tabs defaultValue="time-clock" className="space-y-4">
-          <TabsList className="grid grid-cols-6 lg:grid-cols-11 w-full">
+          <TabsList className="grid grid-cols-6 lg:grid-cols-12 w-full">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="time-clock">Clock</TabsTrigger>
             <TabsTrigger value="time-off">Time Off</TabsTrigger>
@@ -1271,6 +1289,7 @@ export default function EmployeePortal() {
             <TabsTrigger value="service-charges">Tips</TabsTrigger>
             <TabsTrigger value="disciplinary">Discipline</TabsTrigger>
             <TabsTrigger value="deductions">Deductions</TabsTrigger>
+            <TabsTrigger value="loans">Loans</TabsTrigger>
           </TabsList>
 
           {/* ----- PROFILE ----- */}
