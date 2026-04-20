@@ -1095,9 +1095,8 @@ export default function TimeOffPage() {
                           {((leaveTypes ?? []) as any[]).map((lt) => {
                             if (!lt.enforceEligibility) {
                               return (
-                                <td key={lt.id} className="p-2">
                                 <td key={lt.id} className="p-2 whitespace-nowrap">
-                                  <Badge className={`${status.tone} whitespace-nowrap`}>Always eligible</Badge>
+                                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Always eligible</Badge>
                                 </td>
                               );
                             }
