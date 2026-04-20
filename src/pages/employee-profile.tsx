@@ -571,8 +571,53 @@ export default function EmployeeProfilePage() {
             )}
           </div>
 
+          {/* Contract Details */}
+          {((employee as any).contractType || (employee as any).contractSignedDate || (employee as any).contractExpiryDate || (employee as any).lastPromotionDate || employee.startDate) && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  Contract Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                  <div><p className="text-muted-foreground text-xs mb-1">Start Date</p><p className="font-medium">{employee.startDate ? format(parseISO(employee.startDate), "MMM d, yyyy") : "—"}</p></div>
+                  <div><p className="text-muted-foreground text-xs mb-1">Last Promotion</p><p className="font-medium">{(employee as any).lastPromotionDate ? format(parseISO((employee as any).lastPromotionDate), "MMM d, yyyy") : "—"}</p></div>
+                  <div><p className="text-muted-foreground text-xs mb-1">Contract Type</p><p className="font-medium">{(employee as any).contractType || "—"}</p></div>
+                  <div><p className="text-muted-foreground text-xs mb-1">Signed Date</p><p className="font-medium">{(employee as any).contractSignedDate ? format(parseISO((employee as any).contractSignedDate), "MMM d, yyyy") : "—"}</p></div>
+                  <div><p className="text-muted-foreground text-xs mb-1">Expiry Date</p><p className="font-medium">{(employee as any).contractExpiryDate ? format(parseISO((employee as any).contractExpiryDate), "MMM d, yyyy") : "—"}</p></div>
+                  <div><p className="text-muted-foreground text-xs mb-1">Duration</p><p className="font-medium">{(() => {
+                    const s = (employee as any).contractSignedDate; const e = (employee as any).contractExpiryDate;
+                    if (!s || !e) return "—";
+                    const months = Math.max(0, Math.round((new Date(e).getTime() - new Date(s).getTime()) / (1000*60*60*24*30.4375)));
+                    const y = Math.floor(months/12); const m = months % 12;
+                    return [y && `${y}y`, m && `${m}m`].filter(Boolean).join(" ") || "—";
+                  })()}</p></div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Personal Details */}
+          {((employee as any).dateOfBirth || (employee as any).permanentAddress) && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <UserCheck className="h-4 w-4 text-muted-foreground" />
+                  Personal Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Date of Birth</span><span className="font-medium">{(employee as any).dateOfBirth ? format(parseISO((employee as any).dateOfBirth), "MMM d, yyyy") : "—"}</span></div>
+                <Separator />
+                <div className="flex justify-between gap-4"><span className="text-muted-foreground">Permanent Address</span><span className="font-medium text-right">{(employee as any).permanentAddress || "—"}</span></div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Salary Package Section */}
-          {(employee.basicSalary || employee.foodAllowance || employee.accommodationAllowance || employee.otherAllowance) && (
+          {(employee.basicSalary || (employee as any).fixedAllowance || (employee as any).dutyAllowance || (employee as any).attendanceAllowance || employee.accommodationAllowance || (employee as any).additionalServiceAllowance) && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -581,33 +626,25 @@ export default function EmployeeProfilePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">Basic Salary</p>
-                    <p className="text-lg font-bold">{formatSalary(employee.basicSalary || 0)}</p>
-                  </div>
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">Food Allowance</p>
-                    <p className="text-lg font-bold">{formatSalary(employee.foodAllowance || 0)}</p>
-                  </div>
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">Accommodation</p>
-                    <p className="text-lg font-bold">{formatSalary(employee.accommodationAllowance || 0)}</p>
-                  </div>
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">Other Allowances</p>
-                    <p className="text-lg font-bold">{formatSalary(employee.otherAllowance || 0)}</p>
-                  </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="text-center p-3 bg-muted/50 rounded-lg"><p className="text-xs text-muted-foreground mb-1">Basic Salary</p><p className="text-lg font-bold">{formatSalary(employee.basicSalary || 0)}</p></div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg"><p className="text-xs text-muted-foreground mb-1">Fixed Allowance</p><p className="text-lg font-bold">{formatSalary((employee as any).fixedAllowance || 0)}</p></div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg"><p className="text-xs text-muted-foreground mb-1">Duty Allowance</p><p className="text-lg font-bold">{formatSalary((employee as any).dutyAllowance || 0)}</p></div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg"><p className="text-xs text-muted-foreground mb-1">Attendance Allowance</p><p className="text-lg font-bold">{formatSalary((employee as any).attendanceAllowance || 0)}</p></div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg"><p className="text-xs text-muted-foreground mb-1">Living Allowance</p><p className="text-lg font-bold">{formatSalary(employee.accommodationAllowance || 0)}</p></div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg"><p className="text-xs text-muted-foreground mb-1">Additional Service</p><p className="text-lg font-bold">{formatSalary((employee as any).additionalServiceAllowance || 0)}</p></div>
                 </div>
                 <Separator className="my-4" />
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground font-medium">Total Package</span>
                   <span className="text-xl font-bold text-primary">
                     {formatSalary(
-                      (employee.basicSalary || 0) + 
-                      (employee.foodAllowance || 0) + 
-                      (employee.accommodationAllowance || 0) + 
-                      (employee.otherAllowance || 0)
+                      (employee.basicSalary || 0) +
+                      ((employee as any).fixedAllowance || 0) +
+                      ((employee as any).dutyAllowance || 0) +
+                      ((employee as any).attendanceAllowance || 0) +
+                      (employee.accommodationAllowance || 0) +
+                      ((employee as any).additionalServiceAllowance || 0)
                     )}
                   </span>
                 </div>
