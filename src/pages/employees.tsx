@@ -160,10 +160,18 @@ function EditEmployeeDialog({
       employmentStatus: employee.employmentStatus || "active",
       startDate: employee.startDate,
       salary: employee.salary || undefined,
+      lastPromotionDate: (employee as any).lastPromotionDate || "",
+      contractType: (employee as any).contractType || "",
+      contractSignedDate: (employee as any).contractSignedDate || "",
+      contractExpiryDate: (employee as any).contractExpiryDate || "",
+      dateOfBirth: (employee as any).dateOfBirth || "",
+      permanentAddress: (employee as any).permanentAddress || "",
       basicSalary: employee.basicSalary || undefined,
-      foodAllowance: employee.foodAllowance || undefined,
+      fixedAllowance: (employee as any).fixedAllowance || undefined,
+      dutyAllowance: (employee as any).dutyAllowance || undefined,
+      attendanceAllowance: (employee as any).attendanceAllowance || undefined,
       accommodationAllowance: employee.accommodationAllowance || undefined,
-      otherAllowance: employee.otherAllowance || undefined,
+      additionalServiceAllowance: (employee as any).additionalServiceAllowance || undefined,
       nationality: employee.nationality || "",
       passportNumber: employee.passportNumber || "",
       passportExpiryDate: employee.passportExpiryDate || "",
@@ -198,6 +206,7 @@ function EditEmployeeDialog({
         "startDate", "passportExpiryDate", "visaExpiryDate", "workPermitExpiryDate",
         "insuranceExpiryDate", "medicalExpiryDate", "quotaExpiryDate",
         "uniformIssuedDate", "safetyShoeIssuedDate",
+        "lastPromotionDate", "contractSignedDate", "contractExpiryDate", "dateOfBirth",
       ]);
       const cleaned: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(data)) {
@@ -309,6 +318,36 @@ function EditEmployeeDialog({
             <FormField control={form.control} name="startDate" render={({ field }) => (
               <FormItem><FormLabel>Start Date</FormLabel><FormControl><Input type="date" {...field} data-testid="input-edit-start-date" /></FormControl><FormMessage /></FormItem>
             )} />
+            <FormField control={form.control} name="lastPromotionDate" render={({ field }) => (
+              <FormItem><FormLabel>Last Promotion Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </div>
+          <div className="border-t pt-4 mt-4">
+            <h4 className="font-medium mb-3">Contract Details</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="contractType" render={({ field }) => (
+                <FormItem><FormLabel>Contract Type</FormLabel><FormControl><Input placeholder="e.g. Permanent, Fixed-term" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="contractSignedDate" render={({ field }) => (
+                <FormItem><FormLabel>Signed Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-3">
+              <FormField control={form.control} name="contractExpiryDate" render={({ field }) => (
+                <FormItem><FormLabel>Expiry Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+          </div>
+          <div className="border-t pt-4 mt-4">
+            <h4 className="font-medium mb-3">Personal Details</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="dateOfBirth" render={({ field }) => (
+                <FormItem><FormLabel>Date of Birth</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            <FormField control={form.control} name="permanentAddress" render={({ field }) => (
+              <FormItem className="mt-3"><FormLabel>Permanent Address</FormLabel><FormControl><Input placeholder="Full home address" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <FormField control={form.control} name="accommodationId" render={({ field }) => (
@@ -348,16 +387,24 @@ function EditEmployeeDialog({
               <FormField control={form.control} name="basicSalary" render={({ field }) => (
                 <FormItem><FormLabel>Basic Salary</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} data-testid="input-edit-basic-salary" /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={form.control} name="foodAllowance" render={({ field }) => (
-                <FormItem><FormLabel>Food Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} data-testid="input-edit-food-allowance" /></FormControl><FormMessage /></FormItem>
+              <FormField control={form.control} name="fixedAllowance" render={({ field }) => (
+                <FormItem><FormLabel>Fixed Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-3">
+              <FormField control={form.control} name="dutyAllowance" render={({ field }) => (
+                <FormItem><FormLabel>Duty Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="attendanceAllowance" render={({ field }) => (
+                <FormItem><FormLabel>Attendance Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
             <div className="grid grid-cols-2 gap-4 mt-3">
               <FormField control={form.control} name="accommodationAllowance" render={({ field }) => (
-                <FormItem><FormLabel>Accommodation Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} data-testid="input-edit-accommodation-allowance" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Living Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} data-testid="input-edit-accommodation-allowance" /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={form.control} name="otherAllowance" render={({ field }) => (
-                <FormItem><FormLabel>Other Allowances</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} data-testid="input-edit-other-allowance" /></FormControl><FormMessage /></FormItem>
+              <FormField control={form.control} name="additionalServiceAllowance" render={({ field }) => (
+                <FormItem><FormLabel>Additional Service Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
           </div>
@@ -985,62 +1032,62 @@ function AddEmployeeDialog({ departments, projects, accommodations }: { departme
             />
 
             <div className="border-t pt-4 mt-4">
-              <h4 className="font-medium mb-3">Salary Package</h4>
+              <h4 className="font-medium mb-3">Contract Details</h4>
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="basicSalary"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Basic Salary</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} data-testid="input-basic-salary" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="foodAllowance"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Food Allowance</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} data-testid="input-food-allowance" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormField control={form.control} name="lastPromotionDate" render={({ field }) => (
+                  <FormItem><FormLabel>Last Promotion Date</FormLabel><FormControl><Input type="date" {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="contractType" render={({ field }) => (
+                  <FormItem><FormLabel>Contract Type</FormLabel><FormControl><Input placeholder="e.g. Permanent" {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
+                )} />
               </div>
               <div className="grid grid-cols-2 gap-4 mt-3">
-                <FormField
-                  control={form.control}
-                  name="accommodationAllowance"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Accommodation Allowance</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} data-testid="input-accommodation-allowance" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="otherAllowance"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Other Allowances</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} data-testid="input-other-allowance" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormField control={form.control} name="contractSignedDate" render={({ field }) => (
+                  <FormItem><FormLabel>Signed Date</FormLabel><FormControl><Input type="date" {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="contractExpiryDate" render={({ field }) => (
+                  <FormItem><FormLabel>Expiry Date</FormLabel><FormControl><Input type="date" {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+            </div>
+
+            <div className="border-t pt-4 mt-4">
+              <h4 className="font-medium mb-3">Personal Details</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="dateOfBirth" render={({ field }) => (
+                  <FormItem><FormLabel>Date of Birth</FormLabel><FormControl><Input type="date" {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <FormField control={form.control} name="permanentAddress" render={({ field }) => (
+                <FormItem className="mt-3"><FormLabel>Permanent Address</FormLabel><FormControl><Input placeholder="Full home address" {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+
+            <div className="border-t pt-4 mt-4">
+              <h4 className="font-medium mb-3">Salary Package</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="basicSalary" render={({ field }) => (
+                  <FormItem><FormLabel>Basic Salary</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} data-testid="input-basic-salary" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="fixedAllowance" render={({ field }) => (
+                  <FormItem><FormLabel>Fixed Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <FormField control={form.control} name="dutyAllowance" render={({ field }) => (
+                  <FormItem><FormLabel>Duty Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="attendanceAllowance" render={({ field }) => (
+                  <FormItem><FormLabel>Attendance Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <FormField control={form.control} name="accommodationAllowance" render={({ field }) => (
+                  <FormItem><FormLabel>Living Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} data-testid="input-accommodation-allowance" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="additionalServiceAllowance" render={({ field }) => (
+                  <FormItem><FormLabel>Additional Service Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} /></FormControl><FormMessage /></FormItem>
+                )} />
               </div>
             </div>
 
