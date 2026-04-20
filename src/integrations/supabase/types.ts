@@ -1174,20 +1174,22 @@ export type Database = {
       }
       payroll_records: {
         Row: {
-          accommodationAllowance: number
+          additionalServiceAllowance: number
+          attendanceAllowance: number
           baseSalary: number
           companyId: string
           createdAt: string
           deductionNotes: string | null
           deductions: number
+          dutyAllowance: number
           earnedSalary: number
           employeeId: string
-          foodAllowance: number
+          fixedAllowance: number
           grossSalary: number
           id: string
+          livingAllowance: number
           month: string
           netPay: number
-          otherAllowance: number
           overtimeAmount: number
           overtimeHours: number
           overtimeRate: number
@@ -1198,20 +1200,22 @@ export type Database = {
           updatedAt: string
         }
         Insert: {
-          accommodationAllowance?: number
+          additionalServiceAllowance?: number
+          attendanceAllowance?: number
           baseSalary?: number
           companyId: string
           createdAt?: string
           deductionNotes?: string | null
           deductions?: number
+          dutyAllowance?: number
           earnedSalary?: number
           employeeId: string
-          foodAllowance?: number
+          fixedAllowance?: number
           grossSalary?: number
           id?: string
+          livingAllowance?: number
           month: string
           netPay?: number
-          otherAllowance?: number
           overtimeAmount?: number
           overtimeHours?: number
           overtimeRate?: number
@@ -1222,20 +1226,22 @@ export type Database = {
           updatedAt?: string
         }
         Update: {
-          accommodationAllowance?: number
+          additionalServiceAllowance?: number
+          attendanceAllowance?: number
           baseSalary?: number
           companyId?: string
           createdAt?: string
           deductionNotes?: string | null
           deductions?: number
+          dutyAllowance?: number
           earnedSalary?: number
           employeeId?: string
-          foodAllowance?: number
+          fixedAllowance?: number
           grossSalary?: number
           id?: string
+          livingAllowance?: number
           month?: string
           netPay?: number
-          otherAllowance?: number
           overtimeAmount?: number
           overtimeHours?: number
           overtimeRate?: number
