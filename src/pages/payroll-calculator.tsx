@@ -101,6 +101,58 @@ export default function PayrollCalculatorPage() {
     },
   });
 
+  // Approved/deducted deductions for this payroll month (YYYY-MM derived from periodStart)
+  const payrollMonthKey = periodStart.slice(0, 7);
+  const { data: deductionsByEmp, refetch: refetchDeductions } = useQuery<
+    Record<string, { total: number; notes: string }>
+  >({
+    queryKey: ["calc-deductions", payrollMonthKey],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("deductions")
+        .select("employeeId, amount, currency, description, deductionType, status, applyToPayrollMonth")
+        .in("status", ["approved", "deducted"])
+        .eq("applyToPayrollMonth", payrollMonthKey);
+      if (error) throw error;
+      const map: Record<string, { total: number; notes: string }> = {};
+      for (const d of (data ?? []) as Array<{
+        employeeId: string; amount: number; currency: string;
+        description: string; deductionType: string;
+      }>) {
+        const cur = map[d.employeeId] ?? { total: 0, notes: "" };
+        cur.total += Number(d.amount) || 0;
+        const line = `${d.deductionType.replace(/_/g, " ")}: ${Number(d.amount).toFixed(2)} — ${d.description}`;
+        cur.notes = cur.notes ? `${cur.notes}\n${line}` : line;
+        map[d.employeeId] = cur;
+      }
+      return map;
+    },
+  });
+
+  // Apply pulled deductions to rows whenever the map changes
+  useEffect(() => {
+    if (!deductionsByEmp || !employees) return;
+    setRows((prev) => {
+      const next = { ...prev };
+      let touched = 0;
+      for (const e of employees) {
+        const d = deductionsByEmp[e.id];
+        const r = next[e.id];
+        if (!r || !d) continue;
+        next[e.id] = { ...r, deductions: d.total, notes: d.notes };
+        touched++;
+      }
+      if (touched > 0) {
+        toast({
+          title: "Deductions pulled",
+          description: `Applied to ${touched} employee${touched === 1 ? "" : "s"} for ${payrollMonthKey}.`,
+        });
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deductionsByEmp, employees]);
+
   // Initialize rows whenever employees load
   useEffect(() => {
     if (!employees) return;
