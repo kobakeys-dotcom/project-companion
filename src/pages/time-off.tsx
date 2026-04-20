@@ -57,6 +57,7 @@ import {
   Users,
   Building2,
   Shield,
+  ShieldCheck,
 } from "lucide-react";
 import type { TimeOffRequest, Employee, LeaveType } from "@shared/schema";
 import { format, parseISO, differenceInDays } from "date-fns";
@@ -1001,24 +1002,47 @@ export default function TimeOffPage() {
       </Dialog>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="requests" data-testid="tab-requests">
-            Leave Requests
-            {pendingRequests.length > 0 && (
-              <Badge className="ml-2 bg-yellow-500/20 text-yellow-600">{pendingRequests.length}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="tracker" data-testid="tab-tracker">Leave Tracker</TabsTrigger>
-          <TabsTrigger value="leave-types" data-testid="tab-leave-types">Leave Types</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <TabsList>
+            <TabsTrigger value="requests" data-testid="tab-requests">
+              Leave Requests
+              {pendingRequests.length > 0 && (
+                <Badge className="ml-2 bg-yellow-500/20 text-yellow-600">{pendingRequests.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="tracker" data-testid="tab-tracker">Leave Tracker</TabsTrigger>
+            <TabsTrigger value="leave-types" data-testid="tab-leave-types">Leave Types</TabsTrigger>
+            <TabsTrigger value="eligibility" data-testid="tab-eligibility">Eligibility</TabsTrigger>
+          </TabsList>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setActiveTab("eligibility")}
+            data-testid="button-leave-eligibility"
+          >
+            <ShieldCheck className="h-4 w-4 mr-2" />
+            Leave Eligibility
+          </Button>
+        </div>
 
         <TabsContent value="tracker" className="space-y-4">
+          <LeaveTracker
+            employees={(employees ?? []) as any}
+            leaveTypes={(leaveTypes ?? []) as any}
+            requests={(timeOffRequests ?? []) as any}
+          />
+        </TabsContent>
+
+        <TabsContent value="eligibility" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Leave Eligibility per Employee</CardTitle>
-              <CardDescription>2-year cycle from joining date · expires 3 months after each window.</CardDescription>
+              <CardDescription>
+                Employees become eligible 2 years after their joining date. Each window lasts 2 years and any
+                unused balance expires 3 months after it ends.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2 max-h-72 overflow-y-auto">
+            <CardContent className="space-y-2 max-h-[60vh] overflow-y-auto">
               {(employees ?? []).length === 0 ? (
                 <p className="text-sm text-muted-foreground">No employees yet.</p>
               ) : (
@@ -1037,11 +1061,6 @@ export default function TimeOffPage() {
               )}
             </CardContent>
           </Card>
-          <LeaveTracker
-            employees={(employees ?? []) as any}
-            leaveTypes={(leaveTypes ?? []) as any}
-            requests={(timeOffRequests ?? []) as any}
-          />
         </TabsContent>
 
         <TabsContent value="requests" className="space-y-4">
