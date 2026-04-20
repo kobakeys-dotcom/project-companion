@@ -324,6 +324,116 @@ function RequestTimeOffDialog({
   );
 }
 
+// ============================================================
+// Leave Types overview table (per-type eligibility & expiry)
+// ============================================================
+function LeaveTypesTable({ employee, leaveTypes }: { employee: Employee; leaveTypes: LeaveType[] }) {
+  const [requestForId, setRequestForId] = useState<string | null>(null);
+  const eligibility = computeLeaveEligibility(
+    (employee as any)?.startDate,
+    (employee as any)?.createdAt,
+  );
+  const fmt = (d: Date | null | undefined) => (d ? format(d, "MMM d, yyyy") : "—");
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Leave Types</CardTitle>
+        <CardDescription>
+          See which leaves you can request now, when each becomes available, and when an unused balance expires.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {leaveTypes.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-8 text-center">No leave types configured.</p>
+        ) : (
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Leave Type</TableHead>
+                  <TableHead>Days/Year</TableHead>
+                  <TableHead>Eligibility</TableHead>
+                  <TableHead>Expires If Untaken</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leaveTypes.map((lt) => {
+                  const enforce = lt.enforceEligibility ?? true;
+                  const eligible = !enforce || (eligibility?.isEligible === true && !eligibility.isExpired);
+                  const eligibilityLabel = !enforce
+                    ? "Anytime"
+                    : !eligibility
+                    ? "Set start date first"
+                    : eligibility.isEligible && !eligibility.isExpired
+                    ? `Eligible since ${fmt(eligibility.eligibleFrom)}`
+                    : eligibility.isExpired
+                    ? `Expired ${fmt(eligibility.expiryDate)}`
+                    : `Eligible from ${fmt(eligibility.eligibleFrom)}`;
+                  const expiryLabel = !enforce
+                    ? "—"
+                    : eligibility
+                    ? fmt(eligibility.expiryDate)
+                    : "—";
+                  return (
+                    <TableRow key={lt.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="inline-block h-2.5 w-2.5 rounded-full"
+                            style={{ backgroundColor: lt.color || "hsl(var(--primary))" }}
+                          />
+                          <span className="font-medium">{lt.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{lt.daysAllowed}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className={
+                            eligible
+                              ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                              : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                          }
+                        >
+                          {eligibilityLabel}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{expiryLabel}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant={eligible ? "default" : "outline"}
+                          disabled={!eligible}
+                          onClick={() => setRequestForId(lt.id)}
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Request
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+
+      <RequestTimeOffDialog
+        employee={employee}
+        leaveTypes={leaveTypes}
+        preselectedLeaveTypeId={requestForId ?? undefined}
+        open={!!requestForId}
+        onOpenChange={(o) => !o && setRequestForId(null)}
+        trigger={null}
+      />
+    </Card>
+  );
+}
+
+
 
 // ============================================================
 // Expense submission form
