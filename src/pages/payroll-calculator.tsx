@@ -130,27 +130,35 @@ export default function PayrollCalculatorPage() {
     },
   });
 
-  // Apply pulled deductions to rows whenever the map changes
-  useEffect(() => {
-    if (!deductionsByEmp || !employees) return;
+  const applyDeductions = (map: Record<string, { total: number; notes: string }> | undefined) => {
+    if (!employees) return;
+    const m = map ?? {};
+    let touched = 0;
     setRows((prev) => {
       const next = { ...prev };
-      let touched = 0;
       for (const e of employees) {
-        const d = deductionsByEmp[e.id];
+        const d = m[e.id];
         const r = next[e.id];
-        if (!r || !d) continue;
-        next[e.id] = { ...r, deductions: d.total, notes: d.notes };
-        touched++;
-      }
-      if (touched > 0) {
-        toast({
-          title: "Deductions pulled",
-          description: `Applied to ${touched} employee${touched === 1 ? "" : "s"} for ${payrollMonthKey}.`,
-        });
+        if (!r) continue;
+        if (d) {
+          next[e.id] = { ...r, deductions: d.total, notes: d.notes };
+          touched++;
+        }
       }
       return next;
     });
+    toast({
+      title: touched > 0 ? "Deductions pulled" : "No deductions found",
+      description:
+        touched > 0
+          ? `Applied to ${touched} employee${touched === 1 ? "" : "s"} for ${payrollMonthKey}.`
+          : `No approved/deducted entries marked for ${payrollMonthKey}. Set "Apply to payroll month" on the Deductions page.`,
+    });
+  };
+
+  // Auto-apply on first load
+  useEffect(() => {
+    if (deductionsByEmp && employees) applyDeductions(deductionsByEmp);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deductionsByEmp, employees]);
 
@@ -190,28 +198,36 @@ export default function PayrollCalculatorPage() {
     },
   });
 
-  // Apply pulled service charges to rows
-  useEffect(() => {
-    if (!serviceChargesByEmp || !employees) return;
+  const applyServiceCharges = (map: Record<string, { total: number; notes: string }> | undefined) => {
+    if (!employees) return;
+    const m = map ?? {};
+    let touched = 0;
     setRows((prev) => {
       const next = { ...prev };
-      let touched = 0;
       for (const e of employees) {
-        const d = serviceChargesByEmp[e.id];
+        const d = m[e.id];
         const r = next[e.id];
-        if (!r || !d) continue;
-        const mergedNotes = r.notes ? `${r.notes}\n${d.notes}` : d.notes;
-        next[e.id] = { ...r, serviceCharge: d.total, notes: mergedNotes };
-        touched++;
-      }
-      if (touched > 0) {
-        toast({
-          title: "Service charges pulled",
-          description: `Applied to ${touched} employee${touched === 1 ? "" : "s"}.`,
-        });
+        if (!r) continue;
+        if (d) {
+          const mergedNotes = r.notes ? `${r.notes}\n${d.notes}` : d.notes;
+          next[e.id] = { ...r, serviceCharge: d.total, notes: mergedNotes };
+          touched++;
+        }
       }
       return next;
     });
+    toast({
+      title: touched > 0 ? "Service charges pulled" : "No service charges found",
+      description:
+        touched > 0
+          ? `Applied to ${touched} employee${touched === 1 ? "" : "s"}.`
+          : `No service charge shares for pools overlapping ${periodStart} – ${periodEnd}.`,
+    });
+  };
+
+  // Auto-apply on first load
+  useEffect(() => {
+    if (serviceChargesByEmp && employees) applyServiceCharges(serviceChargesByEmp);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceChargesByEmp, employees]);
 
@@ -456,12 +472,26 @@ export default function PayrollCalculatorPage() {
             </Button>
           </div>
           <div className="flex items-end">
-            <Button variant="outline" onClick={() => refetchDeductions()} className="w-full">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const { data } = await refetchDeductions();
+                applyDeductions(data);
+              }}
+              className="w-full"
+            >
               <RefreshCw className="h-4 w-4 mr-2" /> Pull Deductions
             </Button>
           </div>
           <div className="flex items-end">
-            <Button variant="outline" onClick={() => refetchServiceCharges()} className="w-full">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const { data } = await refetchServiceCharges();
+                applyServiceCharges(data);
+              }}
+              className="w-full"
+            >
               <RefreshCw className="h-4 w-4 mr-2" /> Pull Service Charges
             </Button>
           </div>
