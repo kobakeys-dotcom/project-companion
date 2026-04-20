@@ -611,6 +611,7 @@ export default function PayrollCalculatorPage() {
                   <TableHead>OT Amt</TableHead>
                   <TableHead>Gross</TableHead>
                   <TableHead>Deduct.</TableHead>
+                  <TableHead>Pension</TableHead>
                   <TableHead className="min-w-32">Notes</TableHead>
                   <TableHead className="text-right">Net</TableHead>
                 </TableRow>
@@ -619,7 +620,7 @@ export default function PayrollCalculatorPage() {
                 {employees.map((e) => {
                   const r = rows[e.id];
                   if (!r) return null;
-                  const c = computed[e.id] ?? { ot: 0, gross: 0, net: 0 };
+                  const c = computed[e.id] ?? { ot: 0, gross: 0, totalDed: 0, net: 0 };
                   return (
                     <TableRow key={e.id}>
                       <TableCell>
@@ -640,6 +641,16 @@ export default function PayrollCalculatorPage() {
                       <TableCell className="font-mono text-sm">{fmt(c.ot)}</TableCell>
                       <TableCell className="font-mono text-sm">{fmt(c.gross)}</TableCell>
                       <TableCell>{numInput(r.deductions, (n) => updateRow(e.id, { deductions: n }))}</TableCell>
+                      <TableCell>
+                        {r.pensionEnabled ? (
+                          <div className="font-mono text-sm">
+                            <div>{fmt(r.pension)}</div>
+                            <div className="text-[10px] text-muted-foreground">{r.pensionPercentage}% of basic</div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Input
                           className="h-8"
@@ -663,6 +674,7 @@ export default function PayrollCalculatorPage() {
                   <TableCell>{fmt(totals.ot)}</TableCell>
                   <TableCell>{fmt(totals.gross)}</TableCell>
                   <TableCell>{fmt(totals.ded)}</TableCell>
+                  <TableCell>{fmt(totals.pension)}</TableCell>
                   <TableCell />
                   <TableCell className="text-right text-primary">{fmt(totals.net)}</TableCell>
                 </TableRow>
