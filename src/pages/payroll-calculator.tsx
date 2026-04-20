@@ -286,6 +286,7 @@ export default function PayrollCalculatorPage() {
         (r.attendance || 0) +
         (r.living || 0) +
         (r.additionalService || 0) +
+        (r.serviceCharge || 0) +
         ot;
       const net = gross - (r.deductions || 0);
       out[id] = { ot, gross, net };
@@ -294,6 +295,19 @@ export default function PayrollCalculatorPage() {
   }, [rows]);
 
   const totals = useMemo(() => {
+    let basic = 0, allowances = 0, ot = 0, gross = 0, ded = 0, net = 0, sc = 0;
+    for (const [id, r] of Object.entries(rows)) {
+      const c = computed[id];
+      basic += r.earned;
+      allowances += r.fixed + r.duty + r.attendance + r.living + r.additionalService;
+      sc += r.serviceCharge;
+      ot += c?.ot ?? 0;
+      gross += c?.gross ?? 0;
+      ded += r.deductions;
+      net += c?.net ?? 0;
+    }
+    return { basic, allowances, sc, ot, gross, ded, net };
+  }, [rows, computed]);
     let basic = 0, allowances = 0, ot = 0, gross = 0, ded = 0, net = 0;
     for (const [id, r] of Object.entries(rows)) {
       const c = computed[id];
