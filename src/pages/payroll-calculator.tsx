@@ -503,34 +503,21 @@ export default function PayrollCalculatorPage() {
             />
           </div>
           <div className="flex items-end">
-            <Button size="sm" variant="outline" onClick={() => refetchAttendance()} className="w-full h-8 text-xs">
-              <RefreshCw className="h-3 w-3 mr-1" /> Pull Attendance
-            </Button>
-          </div>
-          <div className="flex items-end">
             <Button
               size="sm"
               variant="outline"
               onClick={async () => {
-                const { data } = await refetchDeductions();
-                applyDeductions(data);
+                const [a, d, s] = await Promise.all([
+                  refetchAttendance(),
+                  refetchDeductions(),
+                  refetchServiceCharges(),
+                ]);
+                applyDeductions(d.data);
+                applyServiceCharges(s.data);
               }}
               className="w-full h-8 text-xs"
             >
-              <RefreshCw className="h-3 w-3 mr-1" /> Pull Deductions
-            </Button>
-          </div>
-          <div className="flex items-end">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={async () => {
-                const { data } = await refetchServiceCharges();
-                applyServiceCharges(data);
-              }}
-              className="w-full h-8 text-xs"
-            >
-              <RefreshCw className="h-3 w-3 mr-1" /> Pull Service Charges
+              <RefreshCw className="h-3 w-3 mr-1" /> Pull All Records
             </Button>
           </div>
           <div className="flex items-end">
