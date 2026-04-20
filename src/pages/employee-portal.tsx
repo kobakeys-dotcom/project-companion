@@ -1081,6 +1081,7 @@ export default function EmployeePortal() {
               startDate={(employee as any)?.startDate}
               createdAt={(employee as any)?.createdAt}
             />
+            <LeaveTypesTable employee={employee} leaveTypes={leaveTypes} />
             <Card>
               <CardHeader className="flex-row items-center justify-between space-y-0">
                 <div>
