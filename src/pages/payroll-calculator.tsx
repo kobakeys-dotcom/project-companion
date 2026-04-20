@@ -299,6 +299,8 @@ export default function PayrollCalculatorPage() {
           pensionEnabled,
           pensionPercentage: pensionPct,
           pension,
+          loanRepayment: 0,
+          loanNote: "",
           notes: "",
         };
       }
