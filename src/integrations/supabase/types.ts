@@ -1142,6 +1142,157 @@ export type Database = {
           },
         ]
       }
+      loan_repayments: {
+        Row: {
+          amount: number
+          companyId: string
+          createdAt: string
+          employeeId: string
+          id: string
+          installmentNumber: number
+          loanId: string
+          month: string
+          notes: string | null
+          paidAt: string | null
+          paidInPayrollId: string | null
+          status: Database["public"]["Enums"]["loan_repayment_status"]
+          updatedAt: string
+        }
+        Insert: {
+          amount?: number
+          companyId: string
+          createdAt?: string
+          employeeId: string
+          id?: string
+          installmentNumber: number
+          loanId: string
+          month: string
+          notes?: string | null
+          paidAt?: string | null
+          paidInPayrollId?: string | null
+          status?: Database["public"]["Enums"]["loan_repayment_status"]
+          updatedAt?: string
+        }
+        Update: {
+          amount?: number
+          companyId?: string
+          createdAt?: string
+          employeeId?: string
+          id?: string
+          installmentNumber?: number
+          loanId?: string
+          month?: string
+          notes?: string | null
+          paidAt?: string | null
+          paidInPayrollId?: string | null
+          status?: Database["public"]["Enums"]["loan_repayment_status"]
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_repayments_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_repayments_employeeId_fkey"
+            columns: ["employeeId"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_repayments_loanId_fkey"
+            columns: ["loanId"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loans: {
+        Row: {
+          adminApprovalStatus: string
+          amount: number
+          approvedAt: string | null
+          approvedBy: string | null
+          companyId: string
+          createdAt: string
+          currency: string
+          deptApprovalStatus: string
+          deptApprovalToken: string | null
+          employeeId: string
+          id: string
+          mgmtApprovalStatus: string
+          mgmtApprovalToken: string | null
+          reason: string | null
+          recoveryMonths: number
+          rejectionReason: string | null
+          startMonth: string | null
+          status: Database["public"]["Enums"]["loan_status"]
+          updatedAt: string
+        }
+        Insert: {
+          adminApprovalStatus?: string
+          amount: number
+          approvedAt?: string | null
+          approvedBy?: string | null
+          companyId: string
+          createdAt?: string
+          currency?: string
+          deptApprovalStatus?: string
+          deptApprovalToken?: string | null
+          employeeId: string
+          id?: string
+          mgmtApprovalStatus?: string
+          mgmtApprovalToken?: string | null
+          reason?: string | null
+          recoveryMonths: number
+          rejectionReason?: string | null
+          startMonth?: string | null
+          status?: Database["public"]["Enums"]["loan_status"]
+          updatedAt?: string
+        }
+        Update: {
+          adminApprovalStatus?: string
+          amount?: number
+          approvedAt?: string | null
+          approvedBy?: string | null
+          companyId?: string
+          createdAt?: string
+          currency?: string
+          deptApprovalStatus?: string
+          deptApprovalToken?: string | null
+          employeeId?: string
+          id?: string
+          mgmtApprovalStatus?: string
+          mgmtApprovalToken?: string | null
+          reason?: string | null
+          recoveryMonths?: number
+          rejectionReason?: string | null
+          startMonth?: string | null
+          status?: Database["public"]["Enums"]["loan_status"]
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loans_companyId_fkey"
+            columns: ["companyId"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_employeeId_fkey"
+            columns: ["employeeId"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -1832,6 +1983,7 @@ export type Database = {
       }
       email_for_employee_code: { Args: { _code: string }; Returns: string }
       expire_untaken_leave: { Args: never; Returns: undefined }
+      generate_loan_schedule: { Args: { _loan_id: string }; Returns: undefined }
       get_time_off_tokens: {
         Args: { _request_id: string }
         Returns: {
@@ -1937,6 +2089,15 @@ export type Database = {
       disciplinary_status: "active" | "expired" | "revoked" | "acknowledged"
       employment_status: "active" | "on_leave" | "terminated"
       employment_type: "full_time" | "part_time" | "contractor" | "intern"
+      loan_repayment_status: "scheduled" | "paid" | "skipped"
+      loan_status:
+        | "pending"
+        | "dept_approved"
+        | "mgmt_approved"
+        | "approved"
+        | "rejected"
+        | "cancelled"
+        | "completed"
       project_type: "project" | "branch" | "site"
       service_charge_distribution: "equal" | "weighted"
       service_charge_outlet_type: "restaurant" | "guest_house" | "other"
@@ -2090,6 +2251,16 @@ export const Constants = {
       disciplinary_status: ["active", "expired", "revoked", "acknowledged"],
       employment_status: ["active", "on_leave", "terminated"],
       employment_type: ["full_time", "part_time", "contractor", "intern"],
+      loan_repayment_status: ["scheduled", "paid", "skipped"],
+      loan_status: [
+        "pending",
+        "dept_approved",
+        "mgmt_approved",
+        "approved",
+        "rejected",
+        "cancelled",
+        "completed",
+      ],
       project_type: ["project", "branch", "site"],
       service_charge_distribution: ["equal", "weighted"],
       service_charge_outlet_type: ["restaurant", "guest_house", "other"],
