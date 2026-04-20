@@ -361,7 +361,7 @@ export default function PayrollCalculatorPage() {
           <CardTitle>Pay Period</CardTitle>
           <CardDescription>Set the period and pull worked days from attendance.</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <CardContent className="grid grid-cols-2 md:grid-cols-6 gap-4">
           <div>
             <Label>Month</Label>
             <Input value={monthLabel} onChange={(e) => setMonthLabel(e.target.value)} />
@@ -386,6 +386,11 @@ export default function PayrollCalculatorPage() {
           <div className="flex items-end">
             <Button variant="outline" onClick={() => refetchAttendance()} className="w-full">
               <RefreshCw className="h-4 w-4 mr-2" /> Pull Attendance
+            </Button>
+          </div>
+          <div className="flex items-end">
+            <Button variant="outline" onClick={() => refetchDeductions()} className="w-full">
+              <RefreshCw className="h-4 w-4 mr-2" /> Pull Deductions
             </Button>
           </div>
         </CardContent>
