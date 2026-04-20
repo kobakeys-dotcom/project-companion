@@ -657,8 +657,90 @@ function SubmitExpenseDialog({ employee, expenseTypes }: { employee: Employee; e
 }
 
 // ============================================================
-// Time Clock (clock in/out with optional GPS)
+// Loan request form
 // ============================================================
+const loanSchema = z.object({
+  amount: z.coerce.number().positive("Amount must be > 0").max(10_000_000),
+  recoveryMonths: z.coerce.number().int().min(1, "At least 1 month").max(120),
+  reason: z.string().max(500).optional(),
+});
+type LoanForm = z.infer<typeof loanSchema>;
+
+function RequestLoanDialog({ employee, currency }: { employee: Employee; currency: string }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const form = useForm<LoanForm>({
+    resolver: zodResolver(loanSchema),
+    defaultValues: { amount: 0, recoveryMonths: 12, reason: "" },
+  });
+
+  const submit = useMutation({
+    mutationFn: async (v: LoanForm) => {
+      const { error } = await sb.from("loans").insert({
+        companyId: employee.companyId,
+        employeeId: employee.id,
+        amount: v.amount,
+        currency,
+        recoveryMonths: v.recoveryMonths,
+        reason: v.reason || null,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast({ title: "Loan request submitted" });
+      qc.invalidateQueries({ queryKey: ["portal:loans"] });
+      form.reset();
+      setOpen(false);
+    },
+    onError: (e: Error) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
+  });
+
+  const amount = form.watch("amount");
+  const months = form.watch("recoveryMonths");
+  const monthly = amount > 0 && months > 0 ? amount / months : 0;
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm"><Plus className="h-4 w-4 mr-1" />Request Loan</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Request a Loan</DialogTitle>
+          <DialogDescription>Your request will be reviewed by department, management, and admin.</DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit((v) => submit.mutate(v))} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <FormField control={form.control} name="amount" render={({ field }) => (
+                <FormItem><FormLabel>Amount ({currency})</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="recoveryMonths" render={({ field }) => (
+                <FormItem><FormLabel>Recovery (months)</FormLabel><FormControl><Input type="number" min={1} max={120} {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            {monthly > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Estimated monthly repayment: <span className="font-semibold text-foreground">{fmtMoney(monthly, currency)}</span>
+              </p>
+            )}
+            <FormField control={form.control} name="reason" render={({ field }) => (
+              <FormItem><FormLabel>Reason (optional)</FormLabel><FormControl><Textarea {...field} maxLength={500} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={submit.isPending}>
+                {submit.isPending ? "Submitting…" : "Submit"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 interface TimeEntryRow {
   id: string;
   clockIn: string;
