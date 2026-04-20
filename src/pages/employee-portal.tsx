@@ -1145,6 +1145,8 @@ export default function EmployeePortal() {
       return (data ?? []) as LoanRepaymentRow[];
     },
   });
+
+  const acknowledgeDisciplinary = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await sb.from("disciplinary_records")
         .update({ status: "acknowledged", acknowledgedAt: new Date().toISOString() }).eq("id", id);
