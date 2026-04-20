@@ -676,6 +676,8 @@ export type Database = {
           otherAllowance: number | null
           passportExpiryDate: string | null
           passportNumber: string | null
+          pensionEnabled: boolean
+          pensionPercentage: number
           permanentAddress: string | null
           phone: string | null
           profileImageUrl: string | null
@@ -741,6 +743,8 @@ export type Database = {
           otherAllowance?: number | null
           passportExpiryDate?: string | null
           passportNumber?: string | null
+          pensionEnabled?: boolean
+          pensionPercentage?: number
           permanentAddress?: string | null
           phone?: string | null
           profileImageUrl?: string | null
@@ -806,6 +810,8 @@ export type Database = {
           otherAllowance?: number | null
           passportExpiryDate?: string | null
           passportNumber?: string | null
+          pensionEnabled?: boolean
+          pensionPercentage?: number
           permanentAddress?: string | null
           phone?: string | null
           profileImageUrl?: string | null

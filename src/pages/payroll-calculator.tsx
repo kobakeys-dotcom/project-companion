@@ -23,6 +23,8 @@ type EmployeeRow = {
   attendanceAllowance: number | null;
   accommodationAllowance: number | null; // used as Living Allowance
   additionalServiceAllowance: number | null;
+  pensionEnabled: boolean | null;
+  pensionPercentage: number | null;
   companyId: string;
 };
 
@@ -41,6 +43,9 @@ type RowState = {
   otRate: number;       // per hour, whole units
   serviceCharge: number; // pulled from service_charge_shares
   deductions: number;
+  pensionEnabled: boolean;
+  pensionPercentage: number;
+  pension: number;       // computed: basic × pct%
   notes: string;
 };
 
@@ -81,7 +86,7 @@ export default function PayrollCalculatorPage() {
       const { data, error } = await supabase
         .from("employees")
         .select(
-          'id, firstName, lastName, jobTitle, basicSalary, fixedAllowance, dutyAllowance, attendanceAllowance, accommodationAllowance, additionalServiceAllowance, companyId',
+          'id, firstName, lastName, jobTitle, basicSalary, fixedAllowance, dutyAllowance, attendanceAllowance, accommodationAllowance, additionalServiceAllowance, pensionEnabled, pensionPercentage, companyId',
         )
         .eq("employmentStatus", "active")
         .order("firstName");
@@ -273,6 +278,9 @@ export default function PayrollCalculatorPage() {
       for (const e of employees) {
         const existing = prev[e.id];
         const basic = Math.round((e.basicSalary ?? 0) as number);
+        const pensionEnabled = !!e.pensionEnabled;
+        const pensionPct = Number(e.pensionPercentage ?? 0);
+        const pension = pensionEnabled ? Math.round((basic * pensionPct) / 100) : 0;
         next[e.id] = existing ?? {
           basic,
           fixed: Math.round((e.fixedAllowance ?? 0) as number),
@@ -286,6 +294,9 @@ export default function PayrollCalculatorPage() {
           otRate: 0,
           serviceCharge: 0,
           deductions: 0,
+          pensionEnabled,
+          pensionPercentage: pensionPct,
+          pension,
           notes: "",
         };
       }
@@ -349,12 +360,18 @@ export default function PayrollCalculatorPage() {
           (merged.basic / Math.max(stdDays, 1)) * Math.min(merged.workedDays, stdDays),
         );
       }
+      // Recompute pension whenever basic / pct / enabled changes
+      if ("basic" in patch || "pensionPercentage" in patch || "pensionEnabled" in patch) {
+        merged.pension = merged.pensionEnabled
+          ? Math.round((merged.basic * (merged.pensionPercentage || 0)) / 100)
+          : 0;
+      }
       return { ...prev, [id]: merged };
     });
   };
 
   const computed = useMemo(() => {
-    const out: Record<string, { ot: number; gross: number; net: number }> = {};
+    const out: Record<string, { ot: number; gross: number; totalDed: number; net: number }> = {};
     for (const [id, r] of Object.entries(rows)) {
       const ot = Math.round((r.otHours || 0) * (r.otRate || 0));
       const gross =
@@ -366,14 +383,15 @@ export default function PayrollCalculatorPage() {
         (r.additionalService || 0) +
         (r.serviceCharge || 0) +
         ot;
-      const net = gross - (r.deductions || 0);
-      out[id] = { ot, gross, net };
+      const totalDed = (r.deductions || 0) + (r.pension || 0);
+      const net = gross - totalDed;
+      out[id] = { ot, gross, totalDed, net };
     }
     return out;
   }, [rows]);
 
   const totals = useMemo(() => {
-    let basic = 0, allowances = 0, ot = 0, gross = 0, ded = 0, net = 0, sc = 0;
+    let basic = 0, allowances = 0, ot = 0, gross = 0, ded = 0, net = 0, sc = 0, pension = 0;
     for (const [id, r] of Object.entries(rows)) {
       const c = computed[id];
       basic += r.earned;
@@ -382,9 +400,10 @@ export default function PayrollCalculatorPage() {
       ot += c?.ot ?? 0;
       gross += c?.gross ?? 0;
       ded += r.deductions;
+      pension += r.pension || 0;
       net += c?.net ?? 0;
     }
-    return { basic, allowances, sc, ot, gross, ded, net };
+    return { basic, allowances, sc, ot, gross, ded, pension, net };
   }, [rows, computed]);
 
 
@@ -419,8 +438,13 @@ export default function PayrollCalculatorPage() {
           overtimeRate: Math.round(r.otRate) * 100,
           overtimeAmount: Math.round(c.ot) * 100,
           grossSalary: Math.round(c.gross) * 100,
-          deductions: Math.round(r.deductions) * 100,
-          deductionNotes: r.notes || null,
+          deductions: Math.round((r.deductions || 0) + (r.pension || 0)) * 100,
+          deductionNotes: [
+            r.pension > 0
+              ? `Pension (${r.pensionPercentage}% of basic): ${r.pension.toFixed(2)}`
+              : null,
+            r.notes || null,
+          ].filter(Boolean).join("\n") || null,
           netPay: Math.round(c.net) * 100,
           payFrequency: "monthly",
         };
@@ -587,6 +611,7 @@ export default function PayrollCalculatorPage() {
                   <TableHead>OT Amt</TableHead>
                   <TableHead>Gross</TableHead>
                   <TableHead>Deduct.</TableHead>
+                  <TableHead>Pension</TableHead>
                   <TableHead className="min-w-32">Notes</TableHead>
                   <TableHead className="text-right">Net</TableHead>
                 </TableRow>
@@ -595,7 +620,7 @@ export default function PayrollCalculatorPage() {
                 {employees.map((e) => {
                   const r = rows[e.id];
                   if (!r) return null;
-                  const c = computed[e.id] ?? { ot: 0, gross: 0, net: 0 };
+                  const c = computed[e.id] ?? { ot: 0, gross: 0, totalDed: 0, net: 0 };
                   return (
                     <TableRow key={e.id}>
                       <TableCell>
@@ -616,6 +641,16 @@ export default function PayrollCalculatorPage() {
                       <TableCell className="font-mono text-sm">{fmt(c.ot)}</TableCell>
                       <TableCell className="font-mono text-sm">{fmt(c.gross)}</TableCell>
                       <TableCell>{numInput(r.deductions, (n) => updateRow(e.id, { deductions: n }))}</TableCell>
+                      <TableCell>
+                        {r.pensionEnabled ? (
+                          <div className="font-mono text-sm">
+                            <div>{fmt(r.pension)}</div>
+                            <div className="text-[10px] text-muted-foreground">{r.pensionPercentage}% of basic</div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Input
                           className="h-8"
@@ -639,6 +674,7 @@ export default function PayrollCalculatorPage() {
                   <TableCell>{fmt(totals.ot)}</TableCell>
                   <TableCell>{fmt(totals.gross)}</TableCell>
                   <TableCell>{fmt(totals.ded)}</TableCell>
+                  <TableCell>{fmt(totals.pension)}</TableCell>
                   <TableCell />
                   <TableCell className="text-right text-primary">{fmt(totals.net)}</TableCell>
                 </TableRow>

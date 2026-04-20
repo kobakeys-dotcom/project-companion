@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -92,6 +93,8 @@ const employeeFormSchema = z.object({
   attendanceAllowance: z.number().optional(),
   accommodationAllowance: z.number().optional(), // Living Allowance
   additionalServiceAllowance: z.number().optional(),
+  pensionEnabled: z.boolean().optional(),
+  pensionPercentage: z.number().optional(),
   nationality: z.string().optional(),
   passportNumber: z.string().optional(),
   passportExpiryDate: z.string().optional(),
@@ -172,6 +175,8 @@ function EditEmployeeDialog({
       attendanceAllowance: (employee as any).attendanceAllowance || undefined,
       accommodationAllowance: employee.accommodationAllowance || undefined,
       additionalServiceAllowance: (employee as any).additionalServiceAllowance || undefined,
+      pensionEnabled: (employee as any).pensionEnabled ?? false,
+      pensionPercentage: (employee as any).pensionPercentage ?? 0,
       nationality: employee.nationality || "",
       passportNumber: employee.passportNumber || "",
       passportExpiryDate: employee.passportExpiryDate || "",
@@ -406,6 +411,51 @@ function EditEmployeeDialog({
               <FormField control={form.control} name="additionalServiceAllowance" render={({ field }) => (
                 <FormItem><FormLabel>Additional Service Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} /></FormControl><FormMessage /></FormItem>
               )} />
+            </div>
+          </div>
+
+          <div className="border-t pt-4 mt-4">
+            <h4 className="font-medium mb-3">Pension</h4>
+            <div className="rounded-lg border p-4 space-y-3">
+              <FormField
+                control={form.control}
+                name="pensionEnabled"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between">
+                    <div>
+                      <FormLabel className="text-sm">Enable Pension Deduction</FormLabel>
+                      <p className="text-xs text-muted-foreground">Deducted as % of basic salary at payroll time.</p>
+                    </div>
+                    <FormControl>
+                      <Switch checked={!!field.value} onCheckedChange={field.onChange} data-testid="switch-edit-pension-enabled" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pensionPercentage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Pension % of Basic Salary</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        max={100}
+                        placeholder="0"
+                        disabled={!form.watch("pensionEnabled")}
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+                        data-testid="input-edit-pension-pct"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
 
@@ -693,6 +743,8 @@ function AddEmployeeDialog({ departments, projects, accommodations }: { departme
       employmentType: "full_time",
       employmentStatus: "active",
       startDate: new Date().toISOString().split("T")[0],
+      pensionEnabled: false,
+      pensionPercentage: 0,
       nationality: "",
       passportNumber: "",
       passportExpiryDate: "",
@@ -1094,6 +1146,51 @@ function AddEmployeeDialog({ departments, projects, accommodations }: { departme
                 <FormField control={form.control} name="additionalServiceAllowance" render={({ field }) => (
                   <FormItem><FormLabel>Additional Service Allowance</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value || ""} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} /></FormControl><FormMessage /></FormItem>
                 )} />
+              </div>
+            </div>
+
+            <div className="border-t pt-4 mt-4">
+              <h4 className="font-medium mb-3">Pension</h4>
+              <div className="rounded-lg border p-4 space-y-3">
+                <FormField
+                  control={form.control}
+                  name="pensionEnabled"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between">
+                      <div>
+                        <FormLabel className="text-sm">Enable Pension Deduction</FormLabel>
+                        <p className="text-xs text-muted-foreground">Deducted as % of basic salary at payroll time.</p>
+                      </div>
+                      <FormControl>
+                        <Switch checked={!!field.value} onCheckedChange={field.onChange} data-testid="switch-pension-enabled" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pensionPercentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Pension % of Basic Salary</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min={0}
+                          max={100}
+                          placeholder="0"
+                          disabled={!form.watch("pensionEnabled")}
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+                          data-testid="input-pension-pct"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
 

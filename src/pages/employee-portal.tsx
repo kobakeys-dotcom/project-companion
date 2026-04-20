@@ -106,7 +106,7 @@ interface ExpenseRow {
 interface PayrollRow {
   id: string; month: string; payPeriodStart: string; payPeriodEnd: string;
   baseSalary: number; grossSalary: number; netPay: number; deductions: number;
-  overtimeAmount: number; status: string;
+  overtimeAmount: number; status: string; deductionNotes: string | null;
 }
 interface BenefitRow {
   id: string; name: string; provider: string | null;
@@ -1421,6 +1421,12 @@ export default function EmployeePortal() {
                           <div><p className="text-muted-foreground">Deductions</p><p className="font-medium">−{fmtMoney(p.deductions, currency)}</p></div>
                           <div><p className="text-muted-foreground">Net Pay</p><p className="font-bold text-primary">{fmtMoney(p.netPay, currency)}</p></div>
                         </div>
+                        {p.deductionNotes && (
+                          <div className="mt-3 pt-3 border-t text-xs text-muted-foreground whitespace-pre-line">
+                            <span className="font-medium text-foreground">Deduction details:</span>
+                            <div className="mt-1">{p.deductionNotes}</div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
