@@ -57,13 +57,21 @@ Deno.serve(async (req) => {
     departmentName = dept?.name ?? null;
   }
 
+  // Always show the company's current default currency, not whatever was stored at request time
+  const { data: settings } = await supabase
+    .from("company_settings")
+    .select("defaultCurrency")
+    .eq("companyId", reqRow.companyId)
+    .maybeSingle();
+  const displayCurrency = settings?.defaultCurrency || reqRow.currency || "USD";
+
   const details = {
     id: reqRow.id,
     employeeName: emp ? `${emp.firstName} ${emp.lastName}` : "Unknown",
     employeeEmail: emp?.email ?? "",
     departmentName,
     amount: Number(reqRow.amount),
-    currency: reqRow.currency,
+    currency: displayCurrency,
     recoveryMonths: reqRow.recoveryMonths,
     reason: reqRow.reason,
     status: reqRow.status,

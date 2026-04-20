@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCompanySettings } from "@/hooks/use-company-settings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -388,8 +389,10 @@ function LoanCard({ loan, employee, repayments, refresh }: {
 export default function LoansPage() {
   const { toast } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
+  const { data: settings } = useCompanySettings();
+  const companyCurrency = settings?.defaultCurrency || "USD";
 
-  const { data: loans, refetch: refetchLoans, isLoading } = useQuery<Loan[]>({
+  const { data: loansRaw, refetch: refetchLoans, isLoading } = useQuery<Loan[]>({
     queryKey: ["loans-admin"],
     queryFn: async () => {
       const { data, error } = await sb.from("loans").select("*").order("createdAt", { ascending: false });
@@ -397,6 +400,13 @@ export default function LoansPage() {
       return (data ?? []) as Loan[];
     },
   });
+
+  // Override stored currency with the company's default so the UI always
+  // reflects the latest setting (DB rows may have been created when default was USD).
+  const loans = useMemo(
+    () => (loansRaw ?? []).map((l) => ({ ...l, currency: companyCurrency })),
+    [loansRaw, companyCurrency],
+  );
 
   const { data: repayments, refetch: refetchRepayments } = useQuery<Repayment[]>({
     queryKey: ["loan-repayments-admin"],
